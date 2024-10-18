@@ -11,7 +11,10 @@ composeBom = "2024.09.03"
 
 protobuf-java-lib = { strictly = '3.25.4' }
 protobuf-gradle-plugin-lib = { strictly = '0.9.4' }
-
+lombok-lib = { strictly = '1.18.34' }
+slf4j-lib = { strictly = '1.7.36' }
+logback-lib = { strictly = '1.2.13' }
+google-guava-lib = { strictly = '33.2.1-jre' }
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -31,6 +34,12 @@ androidx-material3 = { group = "androidx.compose.material3", name = "material3" 
 
 protobuf-java = { module = 'com.google.protobuf:protobuf-java', version.ref = 'protobuf-java-lib' }
 protobuf-gradle-plugin = { module = 'com.google.protobuf:protobuf-gradle-plugin', version.ref = 'protobuf-gradle-plugin-lib' }
+
+lombok = { module = 'org.projectlombok:lombok', version.ref = 'lombok-lib' }
+google-guava = { module = 'com.google.guava:guava', version.ref = 'google-guava-lib' }
+slf4j-api = { module = 'org.slf4j:slf4j-api', version.ref = 'slf4j-lib' }
+logback-core = { module = 'ch.qos.logback:logback-core', version.ref = 'logback-lib' }
+logback-classic = { module = 'ch.qos.logback:logback-classic', version.ref = 'logback-lib' }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

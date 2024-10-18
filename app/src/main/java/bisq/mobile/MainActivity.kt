@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import bisq.common.platform.Version
+import bisq.common.util.ExceptionUtil
 import bisq.mobile.ui.theme.MobileTheme
 
 class MainActivity : ComponentActivity() {
@@ -19,7 +20,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        var version = Version("2.1.1")
+        var version = Version("2.1.2")
+        ExceptionUtil.getCauseStack(RuntimeException("test"))
+        ExceptionUtil.getCauseStack(RuntimeException("test"))
+
 
         setContent {
             MobileTheme {

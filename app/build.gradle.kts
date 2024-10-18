@@ -114,6 +114,31 @@ dependencies {
 
 
     implementation("bisq:common:2.1.1")
+    // implementation("bisq:persistence:2.1.1") // missing dependency to bisq::platform -> we need to use shadow jars
+    // implementation("bisq:account:2.1.1")
+    // implementation("bisq:application:2.1.1")
+    //  implementation("bisq:bisq-easy:2.1.1")
+    // implementation("bisq:bonded-roles:2.1.1")
+    // implementation("bisq:chat:2.1.1")
+    // implementation("bisq:contract:2.1.1")
+    // implementation("bisq:identity:2.1.1")
+    // implementation("bisq:offer:2.1.1")
+    // implementation("bisq:presentation:2.1.1")
+    // implementation("bisq:security:2.1.1")
+    // implementation("bisq:settings:2.1.1")
+    // implementation("bisq:support:2.1.1")
+    // implementation("bisq:trade:2.1.1")
+    // implementation("bisq:user:2.1.1")
+
+    compileOnly(libs.lombok)
+    annotationProcessor(libs.lombok)
+
+    implementation(libs.google.guava)
+    implementation(libs.slf4j.api)
+    implementation(libs.logback.core)
+    implementation(libs.logback.classic)
+
+
     implementation(libs.protobuf.java)
     implementation(libs.protobuf.gradle.plugin)
     implementation("com.google.protobuf:protoc:3.25.4")
