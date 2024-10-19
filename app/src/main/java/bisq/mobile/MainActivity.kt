@@ -15,9 +15,13 @@ import bisq.common.platform.Version
 import bisq.common.util.ExceptionUtil
 import bisq.i18n.Res
 import bisq.mobile.ui.theme.MobileTheme
+import bisq.network.common.Address
+import bisq.network.common.AddressByTransportTypeMap
+import bisq.network.identity.NetworkId
 import bisq.persistence.PersistenceService
 import bisq.persistence.protobuf.Persistence
 import bisq.security.SecurityService
+import bisq.security.keys.PubKey
 import com.typesafe.config.ConfigFactory
 
 class MainActivity : ComponentActivity() {
@@ -273,6 +277,9 @@ class MainActivity : ComponentActivity() {
         val applicationConfig = baseConfig.getConfig("application")
         var securityServiceConfig= SecurityService.Config.from(applicationConfig.getConfig("security"))
         var securityService = SecurityService(persistenceService, securityServiceConfig)
+
+        var address = Address("test.com",80)
+        //var networkId = NetworkId(AddressByTransportTypeMap(), PubKey(null,""))
 
         setContent {
             MobileTheme {
