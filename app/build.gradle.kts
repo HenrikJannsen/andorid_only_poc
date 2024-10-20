@@ -127,8 +127,10 @@ dependencies {
     implementation(libs.typesafe.config)
     testImplementation(libs.apache.commons.lang)
 
-    implementation("bisq:network-common:2.1.1")
-    implementation("bisq:network-identity:2.1.1")
+    implementation("bisq:android:2.1.1")
+
+   // implementation("bisq:network-common:2.1.1")
+   // implementation("bisq:network-identity:2.1.1")
 
     // implementation("bisq:account:2.1.1")
     // implementation("bisq:application:2.1.1")
