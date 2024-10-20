@@ -12,8 +12,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import bisq.mobile.ui.theme.MobileTheme
 import lombok.extern.slf4j.Slf4j
-import org.bouncycastle.jce.provider.BouncyCastleProvider
-import java.security.Security
 
 @Slf4j
 class MainActivity : ComponentActivity() {
@@ -22,9 +20,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         val userDataDir = getFilesDir().getAbsolutePath()
-        System.setProperty("bisq.userDataDir", userDataDir)
-
-        var androidApp = AndroidApp()
+        var androidApp = AndroidApp(userDataDir)
 
         setContent {
             MobileTheme {

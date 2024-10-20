@@ -1,14 +1,9 @@
 package bisq.mobile;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.jetbrains.annotations.Nullable;
-
 import java.security.KeyPair;
-import java.security.Security;
 
 import bisq.android.AndroidApplicationService;
 import bisq.common.encoding.Hex;
-import bisq.security.keys.KeyBundle;
 import bisq.security.keys.KeyBundleService;
 import lombok.extern.slf4j.Slf4j;
 
@@ -18,8 +13,8 @@ public class AndroidApp {
     private final String defaultKeyId;
     private final KeyPair keyPair;
 
-    public AndroidApp() {
-        androidApplicationService= AndroidApplicationService.getInitializedInstance();
+    public AndroidApp(String userDataDir) {
+        androidApplicationService= AndroidApplicationService.getInitializedInstance(userDataDir);
         KeyBundleService keyBundleService = androidApplicationService.getSecurityService().getKeyBundleService();
         defaultKeyId = keyBundleService.getDefaultKeyId();
         keyPair = keyBundleService.getOrCreateKeyBundle(defaultKeyId).getKeyPair();
