@@ -19,6 +19,7 @@ package bisq.app;
 
 import bisq.account.AccountService;
 import bisq.application.ApplicationService;
+import bisq.application.State;
 import bisq.bisq_easy.BisqEasyService;
 import bisq.bonded_roles.BondedRolesService;
 import bisq.bonded_roles.security_manager.alert.AlertNotificationsService;
@@ -44,6 +45,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
+import java.nio.file.Path;
 import java.security.Security;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -88,7 +90,7 @@ public class AndroidApplicationService extends ApplicationService {
     private final FavouriteMarketsService favouriteMarketsService;
     private final DontShowAgainService dontShowAgainService;
 
-    public static AndroidApplicationService getInitializedInstance(String userDataDir) {
+    public static AndroidApplicationService getInitializedInstance(Path userDataDir) {
         if (INSTANCE == null) {
             // Androids default BC version does not support all algorithms we need, thus we remove
             // it and add our BC provider
@@ -114,8 +116,8 @@ public class AndroidApplicationService extends ApplicationService {
         return INSTANCE;
     }
 
-    public AndroidApplicationService(String userDataDir, String[] args, ShutDownHandler shutDownHandler) {
-        super(userDataDir, "android", args);
+    public AndroidApplicationService(Path userDataDir, String[] args, ShutDownHandler shutDownHandler) {
+        super("android", args, userDataDir, new AndroidMemoryReport());
 
         securityService = new SecurityService(persistenceService, SecurityService.Config.from(getConfig("security")));
         networkService = new NetworkService(NetworkServiceConfig.from(config.getBaseDir(),

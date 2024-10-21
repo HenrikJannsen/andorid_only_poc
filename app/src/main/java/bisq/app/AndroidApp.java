@@ -3,6 +3,7 @@ package bisq.app;
 
 import com.google.common.base.Joiner;
 
+import java.nio.file.Path;
 import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.List;
@@ -48,7 +49,7 @@ public class AndroidApp {
     public final List<String> logMessages = new ArrayList<>();
     public final Observable<String> logMessage = new Observable<>("");
 
-    public AndroidApp(String userDataDir, boolean isRunningInAndroidEmulator) {
+    public AndroidApp(Path userDataDir, boolean isRunningInAndroidEmulator) {
         Address.setIsRunningInAndroidEmulator(isRunningInAndroidEmulator);
         androidApplicationService = AndroidApplicationService.getInitializedInstance(userDataDir);
 
@@ -76,7 +77,7 @@ public class AndroidApp {
         Scheduler.run(() -> {
             long numConnections = peerGroupService.getAllConnectedPeers(defaultNode).count();
             appendLog("numConnections", numConnections);
-        }).repeated(5000, 3);
+        }).repeated(1000, 3);
 
         // identity
         IdentityService identityService = androidApplicationService.getIdentityService();
@@ -90,12 +91,10 @@ public class AndroidApp {
 
         // bonded roles
         BondedRolesService bondedRolesService = androidApplicationService.getBondedRolesService();
-        Scheduler.run(() -> {
-            String priceQuote = bondedRolesService.getMarketPriceService().findMarketPrice(MarketRepository.getUSDBitcoinMarket())
-                    .map(e -> MathUtils.roundDouble(e.getPriceQuote().getValue() / 10000d, 2) + " BTC/USD")
-                    .orElse("N/A");
-            appendLog("USD market price", priceQuote);
-        }).repeated(5000, 3);
+        String priceQuote = bondedRolesService.getMarketPriceService().findMarketPrice(MarketRepository.getUSDBitcoinMarket())
+                .map(e -> MathUtils.roundDouble(e.getPriceQuote().getValue() / 10000d, 2) + " BTC/USD")
+                .orElse("N/A");
+        appendLog("USD market price", priceQuote);
 
         // User
         UserService userService = androidApplicationService.getUserService();
@@ -145,24 +144,22 @@ public class AndroidApp {
                 Optional.empty(),
                 channel,
                 userIdentity);
-        Scheduler.run(() -> {
-            channel.getChatMessages().stream()
-                    .map(message -> {
-                        String authorUserProfileId = message.getAuthorUserProfileId();
-                        String userName = userService.getUserProfileService().findUserProfile(authorUserProfileId)
-                                .map(UserProfile::getUserName)
-                                .orElse("N/A");
-                        String text = message.getText();
-                        return userName + ": " + text;
-                    })
-                    .forEach(e -> appendLog("Chat message:", e));
-        }).after(3000);
+        channel.getChatMessages().stream()
+                .map(message -> {
+                    String authorUserProfileId = message.getAuthorUserProfileId();
+                    String userName = userService.getUserProfileService().findUserProfile(authorUserProfileId)
+                            .map(UserProfile::getUserName)
+                            .orElse("N/A");
+                    String text = message.getText();
+                    return userName + ": " + text;
+                })
+                .forEach(e -> appendLog("Chat message:", e));
     }
 
     private void appendLog(String key, Object value) {
         String line = key + ": " + value;
         logMessages.add(line);
-        if (logMessages.size() > 30) {
+        if (logMessages.size() > 20) {
             logMessages.remove(0);
         }
         logMessage.set(Joiner.on("\n").join(logMessages));

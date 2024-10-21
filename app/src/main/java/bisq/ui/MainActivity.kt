@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import lombok.extern.slf4j.Slf4j
+import java.nio.file.Path
 
 
 @Slf4j
@@ -29,7 +30,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val userDataDir = getFilesDir().getAbsolutePath()
+        val userDataDir = getFilesDir().toPath()
         var androidApp = AndroidApp(
             userDataDir,
             isRunningInAndroidEmulator()

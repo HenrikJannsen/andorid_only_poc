@@ -20,12 +20,12 @@ package bisq.application;
 import bisq.common.application.*;
 import bisq.common.currency.FiatCurrencyRepository;
 import bisq.common.file.FileUtils;
+import bisq.common.jvm.MemoryReport;
 import bisq.common.locale.CountryRepository;
 import bisq.common.locale.LanguageRepository;
 import bisq.common.locale.LocaleRepository;
 import bisq.common.logging.AsciiLogo;
 import bisq.common.logging.LogSetup;
-import bisq.common.platform.PlatformUtils;
 import bisq.common.util.ExceptionUtil;
 import bisq.i18n.Res;
 import bisq.persistence.PersistenceService;
@@ -40,7 +40,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.channels.FileLock;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -70,11 +69,11 @@ public abstract class ApplicationService implements Service {
     @ToString
     @EqualsAndHashCode
     public static final class Config {
-        private static Config from(com.typesafe.config.Config config, String[] args, String userDataDir) {
+        private static Config from(com.typesafe.config.Config config, String[] args, Path userDataDir) {
             String appName = resolveAppName(args, config);
             Path appDataDir = OptionUtils.findOptionValue(args, "--data-dir")
                     .map(Path::of)
-                    .orElse(Paths.get(userDataDir).resolve(appName));
+                    .orElse(userDataDir.resolve(appName));
             return new Config(appDataDir,
                     appName,
                     config.getBoolean("devMode"),
@@ -121,18 +120,19 @@ public abstract class ApplicationService implements Service {
     protected final Config config;
     @Getter
     protected final PersistenceService persistenceService;
-    //@SuppressWarnings("FieldCanBeLocal") // Pin it so that it does not get GC'ed
-   // private final MemoryReport memoryReport; //todo
+    @SuppressWarnings("FieldCanBeLocal") // Pin it so that it does not get GC'ed
+    private final MemoryReport memoryReport;
     private FileLock instanceLock;
 
-    public ApplicationService(String userDataDir, String configFileName, String[] args) {
+    public ApplicationService(String configFileName, String[] args, Path userDataDir, MemoryReport memoryReport) {
+        this.memoryReport = memoryReport;
         com.typesafe.config.Config defaultTypesafeConfig = ConfigFactory.load(configFileName);
         defaultTypesafeConfig.checkValid(ConfigFactory.defaultReference(), configFileName);
 
         String appName = resolveAppName(args, defaultTypesafeConfig.getConfig("application"));
         Path appDataDir = OptionUtils.findOptionValue(args, "--data-dir")
                 .map(Path::of)
-                .orElse(Paths.get(userDataDir).resolve(appName));
+                .orElse(userDataDir.resolve(appName));
         File customConfigFile = Path.of(appDataDir.toString(), "bisq.conf").toFile();
         com.typesafe.config.Config typesafeConfig;
         boolean customConfigProvided = customConfigFile.exists();
@@ -168,10 +168,8 @@ public abstract class ApplicationService implements Service {
             log.info("Using custom config file");
         }
 
-        //todo
-     /*   memoryReport = MemoryReport.getINSTANCE();
         memoryReport.printPeriodically(config.getMemoryReportIntervalSec(), config.isIncludeThreadListInMemoryReport());
-*/
+
         DevMode.setDevMode(config.isDevMode());
 
         Locale locale = LocaleRepository.getDefaultLocale();
@@ -179,7 +177,6 @@ public abstract class ApplicationService implements Service {
         LanguageRepository.setDefaultLanguage(locale.getLanguage());
         FiatCurrencyRepository.setLocale(locale);
         Res.setLanguage(LanguageRepository.getDefaultLanguage());
-
         ResolverConfig.config();
 
         String absoluteDataDirPath = dataDir.toAbsolutePath().toString();
@@ -216,13 +213,5 @@ public abstract class ApplicationService implements Service {
 
     protected boolean hasConfig(String path) {
         return typesafeAppConfig.hasPath(path);
-    }
-
-    public enum State {
-        INITIALIZE_APP,
-        INITIALIZE_NETWORK,
-        INITIALIZE_SERVICES,
-        APP_INITIALIZED,
-        FAILED
     }
 }
