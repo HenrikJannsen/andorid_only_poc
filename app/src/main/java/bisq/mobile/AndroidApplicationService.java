@@ -90,22 +90,17 @@ public class AndroidApplicationService extends TempApplicationService {
         super(userDataDir, "android", args);
 
         securityService = new SecurityService(persistenceService, SecurityService.Config.from(getConfig("security")));
-
-        Path baseDir = config.getBaseDir();
-        com.typesafe.config.Config network = getConfig("network");
-        var d= NetworkServiceConfig.from(baseDir, network);
-
-       networkService = new NetworkService(NetworkServiceConfig.from(config.getBaseDir(),
+        networkService = new NetworkService(NetworkServiceConfig.from(config.getBaseDir(),
                 getConfig("network")),
                 persistenceService,
                 securityService.getKeyBundleService(),
                 securityService.getHashCashProofOfWorkService(),
                 securityService.getEquihashProofOfWorkService());
- /*
-        identityService = new IdentityService(persistenceService,
-                securityService.getKeyBundleService(),
-                networkService);
 
+      /*  identityService = new IdentityService(persistenceService,
+                securityService.getKeyBundleService(),
+                networkService);*/
+ /*
         bondedRolesService = new BondedRolesService(BondedRolesService.Config.from(getConfig("bondedRoles")),
                 getPersistenceService(),
                 networkService);

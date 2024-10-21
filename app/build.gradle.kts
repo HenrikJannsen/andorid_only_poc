@@ -133,6 +133,8 @@ dependencies {
     implementation(libs.chimp.jsocks)
     implementation(libs.failsafe)
 
+    //implementation("bisq:identity:2.1.1")
+
    // implementation("bisq:network-common:2.1.1")
    // implementation("bisq:network-identity:2.1.1")
 

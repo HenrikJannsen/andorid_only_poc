@@ -9,9 +9,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import bisq.mobile.ui.theme.MobileTheme
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import lombok.extern.slf4j.Slf4j
+
 
 @Slf4j
 class MainActivity : ComponentActivity() {
@@ -20,13 +28,20 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         val userDataDir = getFilesDir().getAbsolutePath()
+
         var androidApp = AndroidApp(userDataDir)
+
+        // map observable log message from androidApp to our UI
+        var logViewModel = LogViewModel()
+        androidApp.info.addObserver { info ->
+            logViewModel.update(info)
+        }
 
         setContent {
             MobileTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     Display(
-                        info = androidApp.getInfo(),
+                        logViewModel = logViewModel,
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
@@ -35,10 +50,21 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+class LogViewModel : ViewModel() {
+    private val _value = MutableStateFlow("N/A")
+    val value: StateFlow<String> = _value
+    fun update(newValue: String) {
+        viewModelScope.launch {
+            _value.value = newValue
+        }
+    }
+}
+
 @Composable
-fun Display(info: String, modifier: Modifier = Modifier) {
+fun Display(logViewModel: LogViewModel, modifier: Modifier = Modifier) {
+    val value by logViewModel.value.collectAsState()
     Text(
-        text = info,
+        text = value,
         modifier = modifier
     )
 }
