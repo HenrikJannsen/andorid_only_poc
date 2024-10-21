@@ -33,7 +33,7 @@ class MainActivity : ComponentActivity() {
 
         // map observable log message from androidApp to our UI
         var logViewModel = LogViewModel()
-        androidApp.info.addObserver { info ->
+        androidApp.logMessage.addObserver { info ->
             logViewModel.update(info)
         }
 
