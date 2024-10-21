@@ -19,14 +19,23 @@ package bisq.mobile;
 
 import bisq.account.AccountService;
 import bisq.bonded_roles.BondedRolesService;
+import bisq.bonded_roles.security_manager.alert.AlertNotificationsService;
+import bisq.chat.ChatService;
 import bisq.common.application.ShutDownHandler;
 import bisq.common.observable.Observable;
 import bisq.common.util.ExceptionUtil;
+import bisq.contract.ContractService;
 import bisq.identity.IdentityService;
 import bisq.network.NetworkService;
 import bisq.network.NetworkServiceConfig;
+import bisq.offer.OfferService;
+import bisq.presentation.notifications.SystemNotificationService;
 import bisq.security.SecurityService;
+import bisq.settings.DontShowAgainService;
+import bisq.settings.FavouriteMarketsService;
 import bisq.settings.SettingsService;
+import bisq.support.SupportService;
+import bisq.trade.TradeService;
 import bisq.user.UserService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +43,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import java.security.Security;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
@@ -59,12 +69,22 @@ public class AndroidApplicationService extends TempApplicationService {
     private final Observable<String> startupErrorMessage = new Observable<>();
 
     private final SecurityService securityService;
+    private final NetworkService networkService;
     private final IdentityService identityService;
-    private final AccountService accountService;
-    private final SettingsService settingsService;
     private final BondedRolesService bondedRolesService;
+    private final AccountService accountService;
+    private final OfferService offerService;
+    private final ContractService contractService;
     private final UserService userService;
-    private NetworkService networkService;
+    private final ChatService chatService;
+    private final SettingsService settingsService;
+    private final SupportService supportService;
+    private final SystemNotificationService systemNotificationService;
+    private final TradeService tradeService;
+  /*  private final BisqEasyService bisqEasyService;
+    private final AlertNotificationsService alertNotificationsService;
+    private final FavouriteMarketsService favouriteMarketsService;
+    private final DontShowAgainService dontShowAgainService;*/
 
     public static AndroidApplicationService getInitializedInstance(String userDataDir) {
         if (INSTANCE == null) {
@@ -118,20 +138,13 @@ public class AndroidApplicationService extends TempApplicationService {
                 identityService,
                 networkService,
                 bondedRolesService);
- /*
-
-
 
 
         contractService = new ContractService(securityService);
 
-
-
-
+        offerService = new OfferService(networkService, identityService, persistenceService);
 
         systemNotificationService = new SystemNotificationService(config.getBaseDir(), settingsService);
-
-        offerService = new OfferService(networkService, identityService, persistenceService);
 
         chatService = new ChatService(persistenceService,
                 networkService,
@@ -148,6 +161,8 @@ public class AndroidApplicationService extends TempApplicationService {
 
         tradeService = new TradeService(networkService, identityService, persistenceService, offerService,
                 contractService, supportService, chatService, bondedRolesService, userService, settingsService);
+ /*
+
 
         updaterService = new UpdaterService(getConfig(), settingsService, bondedRolesService.getReleaseNotificationsService());
 
@@ -191,20 +206,19 @@ public class AndroidApplicationService extends TempApplicationService {
                 .thenCompose(result -> settingsService.initialize())
                 .thenCompose(result -> bondedRolesService.initialize())
                 .thenCompose(result -> userService.initialize())
-                /*
-
                .thenCompose(result -> contractService.initialize())
                .thenCompose(result -> offerService.initialize())
                .thenCompose(result -> chatService.initialize())
                .thenCompose(result -> systemNotificationService.initialize())
                .thenCompose(result -> supportService.initialize())
                .thenCompose(result -> tradeService.initialize())
-               .thenCompose(result -> updaterService.initialize())
-               .thenCompose(result -> bisqEasyService.initialize())
-               .thenCompose(result -> alertNotificationsService.initialize())
-               .thenCompose(result -> favouriteMarketsService.initialize())
-               .thenCompose(result -> dontShowAgainService.initialize())
-               .thenCompose(result -> webcamAppService.initialize())*/
+                /*
+              .thenCompose(result -> updaterService.initialize())
+              .thenCompose(result -> bisqEasyService.initialize())
+              .thenCompose(result -> alertNotificationsService.initialize())
+              .thenCompose(result -> favouriteMarketsService.initialize())
+              .thenCompose(result -> dontShowAgainService.initialize())
+              .thenCompose(result -> webcamAppService.initialize())*/
                 .orTimeout(STARTUP_TIMEOUT_SEC, TimeUnit.SECONDS)
                 .handle((result, throwable) -> {
                     if (throwable == null) {
@@ -232,6 +246,11 @@ public class AndroidApplicationService extends TempApplicationService {
         // In case a shutdown method completes exceptionally we log the error and map the result to `false` to not
         // interrupt the shutdown sequence.
         return supplyAsync(() -> securityService.shutdown().exceptionally(this::logError)
+                .thenCompose(result -> tradeService.shutdown().exceptionally(this::logError))
+                .thenCompose(result -> supportService.shutdown().exceptionally(this::logError))
+                .thenCompose(result -> systemNotificationService.shutdown().exceptionally(this::logError))
+                .thenCompose(result -> chatService.shutdown().exceptionally(this::logError))
+                .thenCompose(result -> offerService.shutdown().exceptionally(this::logError))
                 .thenCompose(result -> userService.shutdown().exceptionally(this::logError))
                 .thenCompose(result -> bondedRolesService.shutdown().exceptionally(this::logError))
                 .thenCompose(result -> settingsService.shutdown().exceptionally(this::logError))

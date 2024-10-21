@@ -7,9 +7,16 @@ import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 
 import bisq.account.AccountService;
 import bisq.bonded_roles.BondedRolesService;
+import bisq.chat.ChatChannelDomain;
+import bisq.chat.ChatService;
+import bisq.chat.Citation;
+import bisq.chat.common.CommonPublicChatChannel;
+import bisq.chat.common.CommonPublicChatChannelService;
+import bisq.chat.common.CommonPublicChatMessage;
 import bisq.common.currency.MarketRepository;
 import bisq.common.encoding.Hex;
 import bisq.common.observable.Observable;
@@ -32,6 +39,7 @@ import bisq.user.UserService;
 import bisq.user.identity.NymIdGenerator;
 import bisq.user.identity.UserIdentity;
 import bisq.user.identity.UserIdentityService;
+import bisq.user.profile.UserProfile;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -128,6 +136,29 @@ public class AndroidApp {
                     .map(userProfile -> userProfile.getUserName() + " [" + userProfile.getNym() + "]")
                     .forEach(userName -> appendLog("Existing user name", userName));
         }
+
+        // chat
+        ChatService chatService = androidApplicationService.getChatService();
+        ChatChannelDomain chatChannelDomain = ChatChannelDomain.DISCUSSION;
+        CommonPublicChatChannelService discussionChannelService = chatService.getCommonPublicChatChannelServices().get(chatChannelDomain);
+        CommonPublicChatChannel channel = discussionChannelService.getChannels().stream().findFirst().orElseThrow();
+        UserIdentity userIdentity = userIdentityService.getSelectedUserIdentity();
+        discussionChannelService.publishChatMessage("my random message " + new Random().nextInt(100),
+                Optional.empty(),
+                channel,
+                userIdentity);
+        Scheduler.run(() -> {
+            channel.getChatMessages().stream()
+                    .map(message -> {
+                        String authorUserProfileId = message.getAuthorUserProfileId();
+                        String userName = userService.getUserProfileService().findUserProfile(authorUserProfileId)
+                                .map(UserProfile::getUserName)
+                                .orElse("N/A");
+                        String text = message.getText();
+                        return userName + ": " + text;
+                    })
+                    .forEach(e -> appendLog("Chat message:", e));
+        }).after(3000);
     }
 
     private void appendLog(String key, Object value) {
