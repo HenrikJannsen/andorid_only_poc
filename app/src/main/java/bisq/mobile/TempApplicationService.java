@@ -174,8 +174,7 @@ public abstract class TempApplicationService implements Service {
         FiatCurrencyRepository.setLocale(locale);
         Res.setLanguage(LanguageRepository.getDefaultLanguage());
 
-        //todo
-        //ResolverConfig.config();
+        ResolverConfig.config();
 
         String absoluteDataDirPath = dataDir.toAbsolutePath().toString();
         persistenceService = new PersistenceService(absoluteDataDirPath);

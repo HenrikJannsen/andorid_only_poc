@@ -88,7 +88,7 @@ public class AndroidApp {
 
         // settings
         SettingsService settingsService = androidApplicationService.getSettingsService();
-        appendLog("LanguageCode", settingsService.getLanguageCode());
+        appendLog("LanguageCode", settingsService.getLanguageCode().get());
 
         // bonded roles
         BondedRolesService bondedRolesService = androidApplicationService.getBondedRolesService();
