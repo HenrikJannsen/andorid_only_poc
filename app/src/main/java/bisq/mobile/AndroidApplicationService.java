@@ -22,17 +22,22 @@ import bisq.android.TempApplicationService;
 import bisq.common.application.ShutDownHandler;
 import bisq.common.observable.Observable;
 import bisq.common.util.ExceptionUtil;
+import bisq.network.NetworkService;
+import bisq.network.NetworkServiceConfig;
 import bisq.security.SecurityService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
+import java.nio.file.Path;
 import java.security.Security;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
+
+import com.typesafe.config.Config;
 
 /**
  * Creates domain specific options from program arguments and application options.
@@ -42,19 +47,18 @@ import static java.util.concurrent.CompletableFuture.supplyAsync;
  */
 
 @Slf4j
+@Getter
 public class AndroidApplicationService extends TempApplicationService {
     public static final long STARTUP_TIMEOUT_SEC = 300;
     public static final long SHUTDOWN_TIMEOUT_SEC = 10;
     private static AndroidApplicationService INSTANCE;
 
-    @Getter
     private final Observable<State> state = new Observable<>(State.INITIALIZE_APP);
-    @Getter
     private final Observable<String> shutDownErrorMessage = new Observable<>();
-    @Getter
     private final Observable<String> startupErrorMessage = new Observable<>();
-    @Getter
+
     private final SecurityService securityService;
+    private  NetworkService networkService;
 
     public static AndroidApplicationService getInitializedInstance(String userDataDir) {
         if (INSTANCE == null) {
@@ -87,13 +91,17 @@ public class AndroidApplicationService extends TempApplicationService {
 
         securityService = new SecurityService(persistenceService, SecurityService.Config.from(getConfig("security")));
 
-       /* networkService = new NetworkService(NetworkServiceConfig.from(config.getBaseDir(),
+        Path baseDir = config.getBaseDir();
+        com.typesafe.config.Config network = getConfig("network");
+        var d= NetworkServiceConfig.from(baseDir, network);
+
+       networkService = new NetworkService(NetworkServiceConfig.from(config.getBaseDir(),
                 getConfig("network")),
                 persistenceService,
                 securityService.getKeyBundleService(),
                 securityService.getHashCashProofOfWorkService(),
                 securityService.getEquihashProofOfWorkService());
-
+ /*
         identityService = new IdentityService(persistenceService,
                 securityService.getKeyBundleService(),
                 networkService);
@@ -162,6 +170,7 @@ public class AndroidApplicationService extends TempApplicationService {
     @Override
     public CompletableFuture<Boolean> initialize() {
         return securityService.initialize()
+                .thenCompose(result -> networkService.initialize())
                 /*.thenCompose(result -> {
                     setState(State.INITIALIZE_NETWORK);
                     return networkService.initialize();
