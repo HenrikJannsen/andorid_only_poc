@@ -17,6 +17,7 @@
 
 package bisq.mobile;
 
+import bisq.account.AccountService;
 import bisq.common.application.ShutDownHandler;
 import bisq.common.observable.Observable;
 import bisq.common.util.ExceptionUtil;
@@ -56,6 +57,7 @@ public class AndroidApplicationService extends TempApplicationService {
 
     private final SecurityService securityService;
     private final IdentityService identityService;
+    private final AccountService accountService;
     private NetworkService networkService;
 
     public static AndroidApplicationService getInitializedInstance(String userDataDir) {
@@ -98,12 +100,15 @@ public class AndroidApplicationService extends TempApplicationService {
         identityService = new IdentityService(persistenceService,
                 securityService.getKeyBundleService(),
                 networkService);
+
+        accountService = new AccountService(persistenceService);
+
  /*
         bondedRolesService = new BondedRolesService(BondedRolesService.Config.from(getConfig("bondedRoles")),
                 getPersistenceService(),
                 networkService);
 
-        accountService = new AccountService(persistenceService);
+
 
         contractService = new ContractService(securityService);
 
@@ -173,9 +178,10 @@ public class AndroidApplicationService extends TempApplicationService {
                     }
                 })
                 .thenCompose(result -> identityService.initialize())
+                .thenCompose(result -> accountService.initialize())
                 /*
                .thenCompose(result -> bondedRolesService.initialize())
-               .thenCompose(result -> accountService.initialize())
+
                .thenCompose(result -> contractService.initialize())
                .thenCompose(result -> userService.initialize())
                .thenCompose(result -> settingsService.initialize())
@@ -217,6 +223,7 @@ public class AndroidApplicationService extends TempApplicationService {
         // In case a shutdown method completes exceptionally we log the error and map the result to `false` to not
         // interrupt the shutdown sequence.
         return supplyAsync(() -> securityService.shutdown().exceptionally(this::logError)
+                .thenCompose(result -> accountService.shutdown().exceptionally(this::logError))
                 .thenCompose(result -> identityService.shutdown().exceptionally(this::logError))
                 .thenCompose(result -> networkService.shutdown().exceptionally(this::logError))
                 /* return supplyAsync(() -> webcamAppService.shutdown().exceptionally(this::logError)

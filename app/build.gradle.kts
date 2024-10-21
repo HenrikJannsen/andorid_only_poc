@@ -123,18 +123,17 @@ dependencies {
     testImplementation(libs.apache.commons.lang)
 
     // network
+    // implementation("bisq:network-common:2.1.1")
+    // implementation("bisq:network-identity:2.1.1")
     implementation(libs.chimp.jsocks)
     implementation(libs.failsafe)
 
     // implementation("bisq:identity:2.1.1") // cannot be used until network dependencies are fixed. -> Could not find network:network-common:.
 
-   // implementation("bisq:network-common:2.1.1")
-   // implementation("bisq:network-identity:2.1.1")
-
+    // implementation("bisq:bonded-roles:2.1.1")
     // implementation("bisq:account:2.1.1")
     // implementation("bisq:application:2.1.1")
     //  implementation("bisq:bisq-easy:2.1.1")
-    // implementation("bisq:bonded-roles:2.1.1")
     // implementation("bisq:chat:2.1.1")
     // implementation("bisq:contract:2.1.1")
     // implementation("bisq:identity:2.1.1")
