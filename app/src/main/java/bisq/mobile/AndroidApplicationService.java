@@ -18,6 +18,7 @@
 package bisq.mobile;
 
 import bisq.account.AccountService;
+import bisq.bonded_roles.BondedRolesService;
 import bisq.common.application.ShutDownHandler;
 import bisq.common.observable.Observable;
 import bisq.common.util.ExceptionUtil;
@@ -25,6 +26,7 @@ import bisq.identity.IdentityService;
 import bisq.network.NetworkService;
 import bisq.network.NetworkServiceConfig;
 import bisq.security.SecurityService;
+import bisq.settings.SettingsService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -58,6 +60,8 @@ public class AndroidApplicationService extends TempApplicationService {
     private final SecurityService securityService;
     private final IdentityService identityService;
     private final AccountService accountService;
+    private final SettingsService settingsService;
+    private final BondedRolesService bondedRolesService;
     private NetworkService networkService;
 
     public static AndroidApplicationService getInitializedInstance(String userDataDir) {
@@ -102,11 +106,12 @@ public class AndroidApplicationService extends TempApplicationService {
                 networkService);
 
         accountService = new AccountService(persistenceService);
-
- /*
+        settingsService = new SettingsService(persistenceService);
         bondedRolesService = new BondedRolesService(BondedRolesService.Config.from(getConfig("bondedRoles")),
                 getPersistenceService(),
                 networkService);
+ /*
+
 
 
 
@@ -118,7 +123,7 @@ public class AndroidApplicationService extends TempApplicationService {
                 networkService,
                 bondedRolesService);
 
-        settingsService = new SettingsService(persistenceService);
+
 
         systemNotificationService = new SystemNotificationService(config.getBaseDir(), settingsService);
 
@@ -179,12 +184,14 @@ public class AndroidApplicationService extends TempApplicationService {
                 })
                 .thenCompose(result -> identityService.initialize())
                 .thenCompose(result -> accountService.initialize())
+                .thenCompose(result -> settingsService.initialize())
+                .thenCompose(result -> bondedRolesService.initialize())
                 /*
-               .thenCompose(result -> bondedRolesService.initialize())
+
 
                .thenCompose(result -> contractService.initialize())
                .thenCompose(result -> userService.initialize())
-               .thenCompose(result -> settingsService.initialize())
+
                .thenCompose(result -> offerService.initialize())
                .thenCompose(result -> chatService.initialize())
                .thenCompose(result -> systemNotificationService.initialize())
@@ -223,6 +230,8 @@ public class AndroidApplicationService extends TempApplicationService {
         // In case a shutdown method completes exceptionally we log the error and map the result to `false` to not
         // interrupt the shutdown sequence.
         return supplyAsync(() -> securityService.shutdown().exceptionally(this::logError)
+                .thenCompose(result -> bondedRolesService.shutdown().exceptionally(this::logError))
+                .thenCompose(result -> settingsService.shutdown().exceptionally(this::logError))
                 .thenCompose(result -> accountService.shutdown().exceptionally(this::logError))
                 .thenCompose(result -> identityService.shutdown().exceptionally(this::logError))
                 .thenCompose(result -> networkService.shutdown().exceptionally(this::logError))

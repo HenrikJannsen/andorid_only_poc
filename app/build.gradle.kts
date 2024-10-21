@@ -130,8 +130,15 @@ dependencies {
 
     // implementation("bisq:identity:2.1.1") // cannot be used until network dependencies are fixed. -> Could not find network:network-common:.
 
-    // implementation("bisq:bonded-roles:2.1.1")
     // implementation("bisq:account:2.1.1")
+
+    // implementation("bisq:settings:2.1.1")
+
+    // implementation("bisq:bonded-roles:2.1.1")
+    implementation(libs.google.gson)
+    implementation(libs.typesafe.config)
+    implementation(libs.bundles.jackson)
+
     // implementation("bisq:application:2.1.1")
     //  implementation("bisq:bisq-easy:2.1.1")
     // implementation("bisq:chat:2.1.1")
@@ -140,7 +147,6 @@ dependencies {
     // implementation("bisq:offer:2.1.1")
     // implementation("bisq:presentation:2.1.1")
     //
-    // implementation("bisq:settings:2.1.1")
     // implementation("bisq:support:2.1.1")
     // implementation("bisq:trade:2.1.1")
     // implementation("bisq:user:2.1.1")

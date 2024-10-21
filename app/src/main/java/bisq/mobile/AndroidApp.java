@@ -7,9 +7,13 @@ import java.security.KeyPair;
 import java.util.ArrayList;
 import java.util.List;
 
+import bisq.account.AccountService;
+import bisq.bonded_roles.BondedRolesService;
+import bisq.common.currency.MarketRepository;
 import bisq.common.encoding.Hex;
 import bisq.common.observable.Observable;
 import bisq.common.timer.Scheduler;
+import bisq.common.util.MathUtils;
 import bisq.i18n.Res;
 import bisq.identity.IdentityService;
 import bisq.network.NetworkService;
@@ -19,6 +23,7 @@ import bisq.network.p2p.ServiceNode;
 import bisq.network.p2p.node.Node;
 import bisq.network.p2p.services.peer_group.PeerGroupManager;
 import bisq.security.keys.KeyBundleService;
+import bisq.settings.SettingsService;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -34,7 +39,7 @@ public class AndroidApp {
         androidApplicationService = AndroidApplicationService.getInitializedInstance(userDataDir);
 
         //i18n
-        androidApplicationService.getState().addObserver(state -> appendLog("App state", Res.get("splash.applicationServiceState."+state.name())));
+        androidApplicationService.getState().addObserver(state -> appendLog("App state", Res.get("splash.applicationServiceState." + state.name())));
 
         // security
         KeyBundleService keyBundleService = androidApplicationService.getSecurityService().getKeyBundleService();
@@ -57,10 +62,26 @@ public class AndroidApp {
         Scheduler.run(() -> {
             long numConnections = peerGroupService.getAllConnectedPeers(defaultNode).count();
             appendLog("numConnections", numConnections);
-        }).periodically(1000);
+        }).periodically(5000);
 
         // identity
         IdentityService identityService = androidApplicationService.getIdentityService();
+
+        // account
+        AccountService accountService = androidApplicationService.getAccountService();
+
+        // settings
+        SettingsService settingsService = androidApplicationService.getSettingsService();
+        appendLog("LanguageCode", settingsService.getLanguageCode());
+
+        // bonded roles
+        BondedRolesService bondedRolesService = androidApplicationService.getBondedRolesService();
+        Scheduler.run(() -> {
+            String priceQuote = bondedRolesService.getMarketPriceService().findMarketPrice(MarketRepository.getUSDBitcoinMarket())
+                    .map(e -> MathUtils.roundDouble(e.getPriceQuote().getValue() / 10000d, 2) + " BTC/USD")
+                    .orElse("N/A");
+            appendLog("USD market price", priceQuote);
+        }).periodically(5000);
 
 
     }
