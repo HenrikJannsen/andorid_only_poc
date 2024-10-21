@@ -9,7 +9,7 @@ protobuf {
         artifact = "com.google.protobuf:protoc:3.25.4"
     }
 
-   /* generateProtoTasks {
+    generateProtoTasks {
         all().forEach { task ->
             // Set the source of the .proto files to the "src/main/proto" directory
             //task.source("src/main/proto")
@@ -21,7 +21,7 @@ protobuf {
                 }  // Generates standard Protobuf Java classes
             }
         }
-    }*/
+    }
 
     generateProtoTasks {
         all().forEach { task ->
@@ -68,12 +68,12 @@ android {
     }
 
 
-  /*  sourceSets {
+    sourceSets {
         getByName("main") {
             java.srcDir("src/main/proto")  // Specify the directory for proto files
             java.srcDir("build/generated/source/proto/main/java")  // Specify the Java output directory
         }
-    }*/
+    }
 
     sourceSets {
         getByName("main") {
@@ -128,6 +128,10 @@ dependencies {
     testImplementation(libs.apache.commons.lang)
 
     implementation("bisq:android:2.1.1")
+
+    // network
+    implementation(libs.chimp.jsocks)
+    implementation(libs.failsafe)
 
    // implementation("bisq:network-common:2.1.1")
    // implementation("bisq:network-identity:2.1.1")
