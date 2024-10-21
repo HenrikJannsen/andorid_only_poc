@@ -2,7 +2,6 @@ package bisq.mobile;
 
 import java.security.KeyPair;
 
-import bisq.android.AndroidApplicationService;
 import bisq.common.encoding.Hex;
 import bisq.security.keys.KeyBundleService;
 import lombok.extern.slf4j.Slf4j;
