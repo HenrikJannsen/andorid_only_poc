@@ -70,14 +70,9 @@ android {
 
     sourceSets {
         getByName("main") {
-            java.srcDir("src/main/proto")  // Specify the directory for proto files
-            java.srcDir("build/generated/source/proto/main/java")  // Specify the Java output directory
-        }
-    }
-
-    sourceSets {
-        getByName("main") {
-            java.srcDir("src/main/proto")  // Specify the directory for proto files
+            java.srcDir("src/main/resources")
+            java.srcDir("src/main/proto")
+            java.srcDir("build/generated/source/proto/main/java")
         }
     }
 
