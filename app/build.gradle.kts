@@ -139,17 +139,21 @@ dependencies {
     implementation(libs.typesafe.config)
     implementation(libs.bundles.jackson)
 
+    // implementation("bisq:user:2.1.1")
+
+    // implementation("bisq:contract:2.1.1")
+
+    // implementation("bisq:offer:2.1.1")
+
+    // implementation("bisq:trade:2.1.1")
+
+    // implementation("bisq:support:2.1.1")
+
     // implementation("bisq:application:2.1.1")
     //  implementation("bisq:bisq-easy:2.1.1")
     // implementation("bisq:chat:2.1.1")
-    // implementation("bisq:contract:2.1.1")
-    // implementation("bisq:identity:2.1.1")
-    // implementation("bisq:offer:2.1.1")
     // implementation("bisq:presentation:2.1.1")
     //
-    // implementation("bisq:support:2.1.1")
-    // implementation("bisq:trade:2.1.1")
-    // implementation("bisq:user:2.1.1")
 
     implementation(libs.google.guava)
     compileOnly(libs.lombok)
