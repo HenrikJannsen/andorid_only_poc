@@ -122,8 +122,6 @@ dependencies {
     implementation(libs.typesafe.config)
     testImplementation(libs.apache.commons.lang)
 
-    implementation("bisq:android:2.1.1")
-
     // network
     implementation(libs.chimp.jsocks)
     implementation(libs.failsafe)
@@ -155,7 +153,6 @@ dependencies {
     implementation(libs.slf4j.api)
     implementation(libs.logback.core)
     implementation(libs.logback.classic)
-
 
     implementation(libs.protobuf.java)
     implementation(libs.protobuf.gradle.plugin)

@@ -17,8 +17,6 @@
 
 package bisq.mobile;
 
-import bisq.android.State;
-import bisq.android.TempApplicationService;
 import bisq.common.application.ShutDownHandler;
 import bisq.common.observable.Observable;
 import bisq.common.util.ExceptionUtil;
@@ -29,15 +27,12 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
-import java.nio.file.Path;
 import java.security.Security;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
-
-import com.typesafe.config.Config;
 
 /**
  * Creates domain specific options from program arguments and application options.

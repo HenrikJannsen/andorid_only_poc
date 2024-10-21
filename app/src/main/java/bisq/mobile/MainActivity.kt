@@ -1,6 +1,8 @@
 package bisq.mobile
 
+import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -28,8 +30,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         val userDataDir = getFilesDir().getAbsolutePath()
-
-        var androidApp = AndroidApp(userDataDir)
+        var androidApp = AndroidApp(userDataDir, isRunningInAndroidEmulator())
 
         // map observable log message from androidApp to our UI
         var logViewModel = LogViewModel()
@@ -47,6 +48,16 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    fun isRunningInAndroidEmulator(): Boolean {
+        return (Build.FINGERPRINT.startsWith("google/sdk_gphone_") ||
+                Build.FINGERPRINT.contains("generic") ||
+                Build.MODEL.contains("Emulator") ||
+                Build.MANUFACTURER.contains("Google") ||
+                Build.PRODUCT.contains("sdk_gphone") ||
+                Build.HARDWARE == "goldfish" ||
+                Build.HARDWARE == "ranchu")
     }
 }
 
