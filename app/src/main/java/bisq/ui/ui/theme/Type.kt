@@ -1,4 +1,4 @@
-package bisq.mobile.ui.theme
+package bisq.ui.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

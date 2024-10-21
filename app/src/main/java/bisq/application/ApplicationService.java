@@ -15,7 +15,7 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.mobile;
+package bisq.application;
 
 import bisq.common.application.*;
 import bisq.common.currency.FiatCurrencyRepository;
@@ -25,6 +25,7 @@ import bisq.common.locale.LanguageRepository;
 import bisq.common.locale.LocaleRepository;
 import bisq.common.logging.AsciiLogo;
 import bisq.common.logging.LogSetup;
+import bisq.common.platform.PlatformUtils;
 import bisq.common.util.ExceptionUtil;
 import bisq.i18n.Res;
 import bisq.persistence.PersistenceService;
@@ -45,9 +46,8 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-//TODO  We use ApplicationService later once dependencies are all resolved
 @Slf4j
-public abstract class TempApplicationService implements Service {
+public abstract class ApplicationService implements Service {
     private static String resolveAppName(String[] args, com.typesafe.config.Config config) {
         return OptionUtils.findOptionValue(args, "--app-name")
                 .or(() -> {
@@ -121,9 +121,11 @@ public abstract class TempApplicationService implements Service {
     protected final Config config;
     @Getter
     protected final PersistenceService persistenceService;
+    //@SuppressWarnings("FieldCanBeLocal") // Pin it so that it does not get GC'ed
+   // private final MemoryReport memoryReport; //todo
     private FileLock instanceLock;
 
-    public TempApplicationService(String userDataDir, String configFileName, String[] args) {
+    public ApplicationService(String userDataDir, String configFileName, String[] args) {
         com.typesafe.config.Config defaultTypesafeConfig = ConfigFactory.load(configFileName);
         defaultTypesafeConfig.checkValid(ConfigFactory.defaultReference(), configFileName);
 
@@ -166,6 +168,10 @@ public abstract class TempApplicationService implements Service {
             log.info("Using custom config file");
         }
 
+        //todo
+     /*   memoryReport = MemoryReport.getINSTANCE();
+        memoryReport.printPeriodically(config.getMemoryReportIntervalSec(), config.isIncludeThreadListInMemoryReport());
+*/
         DevMode.setDevMode(config.isDevMode());
 
         Locale locale = LocaleRepository.getDefaultLocale();

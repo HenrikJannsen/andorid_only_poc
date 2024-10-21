@@ -1,4 +1,4 @@
-package bisq.mobile.ui.theme
+package bisq.ui.ui.theme
 
 import android.app.Activity
 import android.os.Build

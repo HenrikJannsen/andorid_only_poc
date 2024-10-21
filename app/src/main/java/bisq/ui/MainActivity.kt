@@ -1,8 +1,7 @@
-package bisq.mobile
+package bisq.ui
 
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -16,7 +15,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import bisq.mobile.ui.theme.MobileTheme
+import bisq.app.AndroidApp
+import bisq.ui.ui.theme.MobileTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -30,7 +30,10 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         val userDataDir = getFilesDir().getAbsolutePath()
-        var androidApp = AndroidApp(userDataDir, isRunningInAndroidEmulator())
+        var androidApp = AndroidApp(
+            userDataDir,
+            isRunningInAndroidEmulator()
+        )
 
         // map observable log message from androidApp to our UI
         var logViewModel = LogViewModel()

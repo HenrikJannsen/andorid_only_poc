@@ -15,9 +15,11 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.mobile;
+package bisq.app;
 
 import bisq.account.AccountService;
+import bisq.application.ApplicationService;
+import bisq.bisq_easy.BisqEasyService;
 import bisq.bonded_roles.BondedRolesService;
 import bisq.bonded_roles.security_manager.alert.AlertNotificationsService;
 import bisq.chat.ChatService;
@@ -59,7 +61,7 @@ import static java.util.concurrent.CompletableFuture.supplyAsync;
 
 @Slf4j
 @Getter
-public class AndroidApplicationService extends TempApplicationService {
+public class AndroidApplicationService extends ApplicationService {
     public static final long STARTUP_TIMEOUT_SEC = 300;
     public static final long SHUTDOWN_TIMEOUT_SEC = 10;
     private static AndroidApplicationService INSTANCE;
@@ -81,10 +83,10 @@ public class AndroidApplicationService extends TempApplicationService {
     private final SupportService supportService;
     private final SystemNotificationService systemNotificationService;
     private final TradeService tradeService;
-  /*  private final BisqEasyService bisqEasyService;
+    private final BisqEasyService bisqEasyService;
     private final AlertNotificationsService alertNotificationsService;
     private final FavouriteMarketsService favouriteMarketsService;
-    private final DontShowAgainService dontShowAgainService;*/
+    private final DontShowAgainService dontShowAgainService;
 
     public static AndroidApplicationService getInitializedInstance(String userDataDir) {
         if (INSTANCE == null) {
@@ -161,14 +163,10 @@ public class AndroidApplicationService extends TempApplicationService {
 
         tradeService = new TradeService(networkService, identityService, persistenceService, offerService,
                 contractService, supportService, chatService, bondedRolesService, userService, settingsService);
- /*
-
-
-        updaterService = new UpdaterService(getConfig(), settingsService, bondedRolesService.getReleaseNotificationsService());
 
         bisqEasyService = new BisqEasyService(persistenceService,
                 securityService,
-                walletService,
+                Optional.empty(),
                 networkService,
                 identityService,
                 bondedRolesService,
@@ -186,7 +184,7 @@ public class AndroidApplicationService extends TempApplicationService {
 
         favouriteMarketsService = new FavouriteMarketsService(settingsService);
 
-        dontShowAgainService = new DontShowAgainService(settingsService);*/
+        dontShowAgainService = new DontShowAgainService(settingsService);
     }
 
     @Override
@@ -202,23 +200,20 @@ public class AndroidApplicationService extends TempApplicationService {
                     }
                 })
                 .thenCompose(result -> identityService.initialize())
-                .thenCompose(result -> accountService.initialize())
-                .thenCompose(result -> settingsService.initialize())
                 .thenCompose(result -> bondedRolesService.initialize())
+                .thenCompose(result -> accountService.initialize())
+                .thenCompose(result -> contractService.initialize())
                 .thenCompose(result -> userService.initialize())
-               .thenCompose(result -> contractService.initialize())
-               .thenCompose(result -> offerService.initialize())
-               .thenCompose(result -> chatService.initialize())
-               .thenCompose(result -> systemNotificationService.initialize())
-               .thenCompose(result -> supportService.initialize())
-               .thenCompose(result -> tradeService.initialize())
-                /*
-              .thenCompose(result -> updaterService.initialize())
-              .thenCompose(result -> bisqEasyService.initialize())
-              .thenCompose(result -> alertNotificationsService.initialize())
-              .thenCompose(result -> favouriteMarketsService.initialize())
-              .thenCompose(result -> dontShowAgainService.initialize())
-              .thenCompose(result -> webcamAppService.initialize())*/
+                .thenCompose(result -> settingsService.initialize())
+                .thenCompose(result -> offerService.initialize())
+                .thenCompose(result -> chatService.initialize())
+                .thenCompose(result -> systemNotificationService.initialize())
+                .thenCompose(result -> supportService.initialize())
+                .thenCompose(result -> tradeService.initialize())
+                .thenCompose(result -> bisqEasyService.initialize())
+                .thenCompose(result -> alertNotificationsService.initialize())
+                .thenCompose(result -> favouriteMarketsService.initialize())
+                .thenCompose(result -> dontShowAgainService.initialize())
                 .orTimeout(STARTUP_TIMEOUT_SEC, TimeUnit.SECONDS)
                 .handle((result, throwable) -> {
                     if (throwable == null) {
@@ -245,39 +240,23 @@ public class AndroidApplicationService extends TempApplicationService {
         // We shut down services in opposite order as they are initialized
         // In case a shutdown method completes exceptionally we log the error and map the result to `false` to not
         // interrupt the shutdown sequence.
-        return supplyAsync(() -> securityService.shutdown().exceptionally(this::logError)
+        return supplyAsync(() -> dontShowAgainService.shutdown().exceptionally(this::logError)
+                .thenCompose(result -> favouriteMarketsService.shutdown().exceptionally(this::logError))
+                .thenCompose(result -> alertNotificationsService.shutdown().exceptionally(this::logError))
+                .thenCompose(result -> bisqEasyService.shutdown().exceptionally(this::logError))
                 .thenCompose(result -> tradeService.shutdown().exceptionally(this::logError))
                 .thenCompose(result -> supportService.shutdown().exceptionally(this::logError))
                 .thenCompose(result -> systemNotificationService.shutdown().exceptionally(this::logError))
                 .thenCompose(result -> chatService.shutdown().exceptionally(this::logError))
                 .thenCompose(result -> offerService.shutdown().exceptionally(this::logError))
-                .thenCompose(result -> userService.shutdown().exceptionally(this::logError))
-                .thenCompose(result -> bondedRolesService.shutdown().exceptionally(this::logError))
                 .thenCompose(result -> settingsService.shutdown().exceptionally(this::logError))
+                .thenCompose(result -> userService.shutdown().exceptionally(this::logError))
+                .thenCompose(result -> contractService.shutdown().exceptionally(this::logError))
                 .thenCompose(result -> accountService.shutdown().exceptionally(this::logError))
+                .thenCompose(result -> bondedRolesService.shutdown().exceptionally(this::logError))
                 .thenCompose(result -> identityService.shutdown().exceptionally(this::logError))
                 .thenCompose(result -> networkService.shutdown().exceptionally(this::logError))
-                /* return supplyAsync(() -> webcamAppService.shutdown().exceptionally(this::logError)
-                         .thenCompose(result -> dontShowAgainService.shutdown().exceptionally(this::logError))
-                         .thenCompose(result -> favouriteMarketsService.shutdown().exceptionally(this::logError))
-                         .thenCompose(result -> alertNotificationsService.shutdown().exceptionally(this::logError))
-                         .thenCompose(result -> bisqEasyService.shutdown().exceptionally(this::logError))
-                         .thenCompose(result -> updaterService.shutdown().exceptionally(this::logError))
-                         .thenCompose(result -> tradeService.shutdown().exceptionally(this::logError))
-                         .thenCompose(result -> supportService.shutdown().exceptionally(this::logError))
-                         .thenCompose(result -> systemNotificationService.shutdown().exceptionally(this::logError))
-                         .thenCompose(result -> chatService.shutdown().exceptionally(this::logError))
-                         .thenCompose(result -> offerService.shutdown().exceptionally(this::logError))
-                         .thenCompose(result -> settingsService.shutdown().exceptionally(this::logError))
-                         .thenCompose(result -> userService.shutdown().exceptionally(this::logError))
-                         .thenCompose(result -> contractService.shutdown().exceptionally(this::logError))
-                         .thenCompose(result -> accountService.shutdown().exceptionally(this::logError))
-                         .thenCompose(result -> bondedRolesService.shutdown().exceptionally(this::logError))
-                         .thenCompose(result -> identityService.shutdown().exceptionally(this::logError))
-                         .thenCompose(result -> networkService.shutdown().exceptionally(this::logError))
-                         .thenCompose(result -> walletService.map(service -> service.shutdown().exceptionally(this::logError))
-                                 .orElse(CompletableFuture.completedFuture(true)))
-                         .thenCompose(result -> securityService.shutdown().exceptionally(this::logError))*/
+                .thenCompose(result -> securityService.shutdown().exceptionally(this::logError))
                 .orTimeout(SHUTDOWN_TIMEOUT_SEC, TimeUnit.SECONDS)
                 .handle((result, throwable) -> {
                     if (throwable == null) {

@@ -1,4 +1,4 @@
-package bisq.mobile.ui.theme
+package bisq.ui.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

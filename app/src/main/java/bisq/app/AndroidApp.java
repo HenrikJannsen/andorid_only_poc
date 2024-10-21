@@ -1,4 +1,4 @@
-package bisq.mobile;
+package bisq.app;
 
 
 import com.google.common.base.Joiner;
@@ -13,10 +13,8 @@ import bisq.account.AccountService;
 import bisq.bonded_roles.BondedRolesService;
 import bisq.chat.ChatChannelDomain;
 import bisq.chat.ChatService;
-import bisq.chat.Citation;
 import bisq.chat.common.CommonPublicChatChannel;
 import bisq.chat.common.CommonPublicChatChannelService;
-import bisq.chat.common.CommonPublicChatMessage;
 import bisq.common.currency.MarketRepository;
 import bisq.common.encoding.Hex;
 import bisq.common.observable.Observable;
@@ -78,7 +76,7 @@ public class AndroidApp {
         Scheduler.run(() -> {
             long numConnections = peerGroupService.getAllConnectedPeers(defaultNode).count();
             appendLog("numConnections", numConnections);
-        }).periodically(5000);
+        }).repeated(5000, 3);
 
         // identity
         IdentityService identityService = androidApplicationService.getIdentityService();
@@ -97,7 +95,7 @@ public class AndroidApp {
                     .map(e -> MathUtils.roundDouble(e.getPriceQuote().getValue() / 10000d, 2) + " BTC/USD")
                     .orElse("N/A");
             appendLog("USD market price", priceQuote);
-        }).periodically(5000);
+        }).repeated(5000, 3);
 
         // User
         UserService userService = androidApplicationService.getUserService();
@@ -105,7 +103,7 @@ public class AndroidApp {
 
         ObservableSet<UserIdentity> userIdentities = userIdentityService.getUserIdentities();
         if (userIdentities.isEmpty()) {
-            String nickName = "Android nick name";
+            String nickName = "Android user " + new Random().nextInt(100);
             KeyPair keyPair = keyBundleService.generateKeyPair();
             byte[] pubKeyHash = DigestUtil.hash(keyPair.getPublic().getEncoded());
             ProofOfWork proofOfWork = userIdentityService.mintNymProofOfWork(pubKeyHash);
@@ -134,7 +132,7 @@ public class AndroidApp {
             userIdentities.stream()
                     .map(userIdentity -> userIdentity.getUserProfile())
                     .map(userProfile -> userProfile.getUserName() + " [" + userProfile.getNym() + "]")
-                    .forEach(userName -> appendLog("Existing user name", userName));
+                    .forEach(userName -> appendLog("Existing profile", userName));
         }
 
         // chat
@@ -143,7 +141,7 @@ public class AndroidApp {
         CommonPublicChatChannelService discussionChannelService = chatService.getCommonPublicChatChannelServices().get(chatChannelDomain);
         CommonPublicChatChannel channel = discussionChannelService.getChannels().stream().findFirst().orElseThrow();
         UserIdentity userIdentity = userIdentityService.getSelectedUserIdentity();
-        discussionChannelService.publishChatMessage("my random message " + new Random().nextInt(100),
+        discussionChannelService.publishChatMessage("My random message " + new Random().nextInt(100),
                 Optional.empty(),
                 channel,
                 userIdentity);
