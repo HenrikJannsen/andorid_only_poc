@@ -126,7 +126,7 @@ dependencies {
     implementation(libs.chimp.jsocks)
     implementation(libs.failsafe)
 
-    //implementation("bisq:identity:2.1.1")
+    // implementation("bisq:identity:2.1.1") // cannot be used until network dependencies are fixed. -> Could not find network:network-common:.
 
    // implementation("bisq:network-common:2.1.1")
    // implementation("bisq:network-identity:2.1.1")
@@ -146,10 +146,10 @@ dependencies {
     // implementation("bisq:trade:2.1.1")
     // implementation("bisq:user:2.1.1")
 
+    implementation(libs.google.guava)
     compileOnly(libs.lombok)
     annotationProcessor(libs.lombok)
 
-    implementation(libs.google.guava)
     implementation(libs.slf4j.api)
     implementation(libs.logback.core)
     implementation(libs.logback.classic)

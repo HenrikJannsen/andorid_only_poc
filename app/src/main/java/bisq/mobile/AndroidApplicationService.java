@@ -20,11 +20,13 @@ package bisq.mobile;
 import bisq.common.application.ShutDownHandler;
 import bisq.common.observable.Observable;
 import bisq.common.util.ExceptionUtil;
+import bisq.identity.IdentityService;
 import bisq.network.NetworkService;
 import bisq.network.NetworkServiceConfig;
 import bisq.security.SecurityService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import java.security.Security;
@@ -53,7 +55,8 @@ public class AndroidApplicationService extends TempApplicationService {
     private final Observable<String> startupErrorMessage = new Observable<>();
 
     private final SecurityService securityService;
-    private  NetworkService networkService;
+    private final IdentityService identityService;
+    private NetworkService networkService;
 
     public static AndroidApplicationService getInitializedInstance(String userDataDir) {
         if (INSTANCE == null) {
@@ -92,9 +95,9 @@ public class AndroidApplicationService extends TempApplicationService {
                 securityService.getHashCashProofOfWorkService(),
                 securityService.getEquihashProofOfWorkService());
 
-      /*  identityService = new IdentityService(persistenceService,
+        identityService = new IdentityService(persistenceService,
                 securityService.getKeyBundleService(),
-                networkService);*/
+                networkService);
  /*
         bondedRolesService = new BondedRolesService(BondedRolesService.Config.from(getConfig("bondedRoles")),
                 getPersistenceService(),
@@ -160,8 +163,7 @@ public class AndroidApplicationService extends TempApplicationService {
     @Override
     public CompletableFuture<Boolean> initialize() {
         return securityService.initialize()
-                .thenCompose(result -> networkService.initialize())
-                /*.thenCompose(result -> {
+                .thenCompose(result -> {
                     setState(State.INITIALIZE_NETWORK);
                     return networkService.initialize();
                 })
@@ -171,22 +173,23 @@ public class AndroidApplicationService extends TempApplicationService {
                     }
                 })
                 .thenCompose(result -> identityService.initialize())
-                .thenCompose(result -> bondedRolesService.initialize())
-                .thenCompose(result -> accountService.initialize())
-                .thenCompose(result -> contractService.initialize())
-                .thenCompose(result -> userService.initialize())
-                .thenCompose(result -> settingsService.initialize())
-                .thenCompose(result -> offerService.initialize())
-                .thenCompose(result -> chatService.initialize())
-                .thenCompose(result -> systemNotificationService.initialize())
-                .thenCompose(result -> supportService.initialize())
-                .thenCompose(result -> tradeService.initialize())
-                .thenCompose(result -> updaterService.initialize())
-                .thenCompose(result -> bisqEasyService.initialize())
-                .thenCompose(result -> alertNotificationsService.initialize())
-                .thenCompose(result -> favouriteMarketsService.initialize())
-                .thenCompose(result -> dontShowAgainService.initialize())
-                .thenCompose(result -> webcamAppService.initialize())*/
+                /*
+               .thenCompose(result -> bondedRolesService.initialize())
+               .thenCompose(result -> accountService.initialize())
+               .thenCompose(result -> contractService.initialize())
+               .thenCompose(result -> userService.initialize())
+               .thenCompose(result -> settingsService.initialize())
+               .thenCompose(result -> offerService.initialize())
+               .thenCompose(result -> chatService.initialize())
+               .thenCompose(result -> systemNotificationService.initialize())
+               .thenCompose(result -> supportService.initialize())
+               .thenCompose(result -> tradeService.initialize())
+               .thenCompose(result -> updaterService.initialize())
+               .thenCompose(result -> bisqEasyService.initialize())
+               .thenCompose(result -> alertNotificationsService.initialize())
+               .thenCompose(result -> favouriteMarketsService.initialize())
+               .thenCompose(result -> dontShowAgainService.initialize())
+               .thenCompose(result -> webcamAppService.initialize())*/
                 .orTimeout(STARTUP_TIMEOUT_SEC, TimeUnit.SECONDS)
                 .handle((result, throwable) -> {
                     if (throwable == null) {
@@ -214,7 +217,8 @@ public class AndroidApplicationService extends TempApplicationService {
         // In case a shutdown method completes exceptionally we log the error and map the result to `false` to not
         // interrupt the shutdown sequence.
         return supplyAsync(() -> securityService.shutdown().exceptionally(this::logError)
-
+                .thenCompose(result -> identityService.shutdown().exceptionally(this::logError))
+                .thenCompose(result -> networkService.shutdown().exceptionally(this::logError))
                 /* return supplyAsync(() -> webcamAppService.shutdown().exceptionally(this::logError)
                          .thenCompose(result -> dontShowAgainService.shutdown().exceptionally(this::logError))
                          .thenCompose(result -> favouriteMarketsService.shutdown().exceptionally(this::logError))
