@@ -42,7 +42,7 @@ public final class AmazonGiftCardAccount extends CountryBasedAccount<AmazonGiftC
                         .setAmazonGiftCardAccount(bisq.account.protobuf.AmazonGiftCardAccount.newBuilder()));
     }
 
-    public static AmazonGiftCardAccount fromProto(bisq.account.protobuf.Account proto) {
+    public static AmazonGiftCardAccount fromProto(Account proto) {
         return new AmazonGiftCardAccount(proto.getAccountName(),
                 AmazonGiftCardAccountPayload.fromProto(proto.getAccountPayload()),
                 Country.fromProto(proto.getCountryBasedAccount().getCountry()));

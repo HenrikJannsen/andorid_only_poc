@@ -115,8 +115,7 @@ public class IdentityService implements PersistenceClient<IdentityStore>, Servic
 
     @Override
     public CompletableFuture<Boolean> persist() {
-        return getPersistence().persistAsync(getPersistableStore().getClone())
-                .handle((nil, throwable) -> throwable == null);
+        return PersistenceClient.super.persist();
     }
 
 
@@ -195,7 +194,7 @@ public class IdentityService implements PersistenceClient<IdentityStore>, Servic
     public Optional<Identity> findAnyIdentityByNetworkId(NetworkId networkId) {
         synchronized (lock) {
             return Stream.concat(Stream.concat(persistableStore.getDefaultIdentity().stream(),
-                            getActiveIdentityByTag().values().stream()),
+                                    getActiveIdentityByTag().values().stream()),
                             getRetired().stream())
                     .filter(e -> e.getNetworkId().equals(networkId))
                     .findAny();

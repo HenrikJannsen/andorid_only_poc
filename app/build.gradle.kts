@@ -121,12 +121,14 @@ dependencies {
     implementation(libs.bouncycastle.pg)
     implementation(libs.typesafe.config)
     testImplementation(libs.apache.commons.lang)
+    implementation(libs.google.guava)
 
     // network
     // implementation("bisq:network-common:2.1.1")
     // implementation("bisq:network-identity:2.1.1")
     implementation(libs.chimp.jsocks)
     implementation(libs.failsafe)
+
 
     // implementation("bisq:identity:2.1.1") // cannot be used until network dependencies are fixed. -> Could not find network:network-common:.
 
@@ -149,7 +151,6 @@ dependencies {
     // implementation("bisq:chat:2.1.1")
     // implementation("bisq:presentation:2.1.1")
 
-    implementation(libs.google.guava)
     compileOnly(libs.lombok)
     annotationProcessor(libs.lombok)
 

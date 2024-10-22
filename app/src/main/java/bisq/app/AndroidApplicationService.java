@@ -128,7 +128,7 @@ public class AndroidApplicationService extends ApplicationService {
 
         offerService = new OfferService(networkService, identityService, persistenceService);
 
-        systemNotificationService = new SystemNotificationService(config.getBaseDir(), settingsService);
+        systemNotificationService = new SystemNotificationService(Optional.empty());
 
         chatService = new ChatService(persistenceService,
                 networkService,
@@ -148,7 +148,6 @@ public class AndroidApplicationService extends ApplicationService {
 
         bisqEasyService = new BisqEasyService(persistenceService,
                 securityService,
-                Optional.empty(),
                 networkService,
                 identityService,
                 bondedRolesService,

@@ -41,7 +41,6 @@ import bisq.trade.TradeService;
 import bisq.user.UserService;
 import bisq.user.identity.UserIdentity;
 import bisq.user.identity.UserIdentityService;
-import bisq.wallets.core.WalletService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -57,7 +56,6 @@ import java.util.stream.Stream;
 public class BisqEasyService implements Service {
     private final PersistenceService persistenceService;
     private final SecurityService securityService;
-    private final Optional<WalletService> walletService;
     private final NetworkService networkService;
     private final IdentityService identityService;
     private final BondedRolesService bondedRolesService;
@@ -78,7 +76,6 @@ public class BisqEasyService implements Service {
 
     public BisqEasyService(PersistenceService persistenceService,
                            SecurityService securityService,
-                           Optional<WalletService> walletService,
                            NetworkService networkService,
                            IdentityService identityService,
                            BondedRolesService bondedRolesService,
@@ -93,7 +90,6 @@ public class BisqEasyService implements Service {
                            TradeService tradeService) {
         this.persistenceService = persistenceService;
         this.securityService = securityService;
-        this.walletService = walletService;
         this.networkService = networkService;
         this.identityService = identityService;
         this.bondedRolesService = bondedRolesService;

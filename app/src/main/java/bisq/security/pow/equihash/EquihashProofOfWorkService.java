@@ -43,7 +43,17 @@ public class EquihashProofOfWorkService extends ProofOfWorkService {
 
     @Override
     public ProofOfWork mint(byte[] payload, @Nullable byte[] challenge, double difficulty) {
-        throw new RuntimeException("");
+        double scaledDifficulty = scaledDifficulty(difficulty);
+        log.debug("Got scaled & adjusted difficulty: {}", scaledDifficulty);
+
+        long ts = System.currentTimeMillis();
+        byte[] seed = getSeed(payload, challenge);
+        byte[] solution = new Equihash(90, 5, scaledDifficulty).puzzle(seed).findSolution().serialize();
+        long counter = Longs.fromByteArray(Arrays.copyOf(solution, 8));
+        long duration = System.currentTimeMillis() - ts;
+        var proofOfWork = new ProofOfWork(payload, counter, challenge, difficulty, solution, duration);
+        log.debug("Completed minting proofOfWork: {}. {} iterations took {} ms.", proofOfWork, counter, duration);
+        return proofOfWork;
     }
 
     private byte[] getSeed(byte[] payload, @Nullable byte[] challenge) {
@@ -64,10 +74,13 @@ public class EquihashProofOfWorkService extends ProofOfWorkService {
 
     @Override
     public boolean verify(ProofOfWork proofOfWork) {
-        throw new RuntimeException("");
+        double scaledDifficulty = scaledDifficulty(proofOfWork.getDifficulty());
+        byte[] seed = getSeed(proofOfWork.getPayload(), proofOfWork.getChallenge());
+        var puzzle = new Equihash(90, 5, scaledDifficulty).puzzle(seed);
+        return puzzle.deserializeSolution(proofOfWork.getSolution()).verify();
     }
 
     private static double scaledDifficulty(double difficulty) {
-        throw new RuntimeException("");
+        return Equihash.adjustDifficulty(DIFFICULTY_SCALE_FACTOR * difficulty);
     }
 }

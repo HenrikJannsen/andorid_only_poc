@@ -15,8 +15,17 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.presentation.notifications;
+package bisq.common.guava;
 
-public interface SystemNotificationDelegate {
-   void show(String title, String message);
+import com.google.common.primitives.ImmutableIntArray;
+
+import java.util.function.Function;
+import java.util.stream.IntStream;
+
+public interface GuavaFunctionProvider {
+     Function<ImmutableIntArray, IntStream> getToIntStreamFunction();
+
+     Function<IntStream, IntStream> getToParallelFunction();
+
+     Function<IntStream, ImmutableIntArray> getCopyOfFunction();
 }
