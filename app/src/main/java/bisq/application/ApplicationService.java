@@ -17,10 +17,12 @@
 
 package bisq.application;
 
-import bisq.common.application.*;
+import bisq.common.application.ApplicationVersion;
+import bisq.common.application.DevMode;
+import bisq.common.application.OptionUtils;
+import bisq.common.application.Service;
 import bisq.common.currency.FiatCurrencyRepository;
 import bisq.common.file.FileUtils;
-import bisq.common.jvm.MemoryReport;
 import bisq.common.locale.CountryRepository;
 import bisq.common.locale.LanguageRepository;
 import bisq.common.locale.LocaleRepository;
@@ -120,12 +122,9 @@ public abstract class ApplicationService implements Service {
     protected final Config config;
     @Getter
     protected final PersistenceService persistenceService;
-    @SuppressWarnings("FieldCanBeLocal") // Pin it so that it does not get GC'ed
-    private final MemoryReport memoryReport;
     private FileLock instanceLock;
 
-    public ApplicationService(String configFileName, String[] args, Path userDataDir, MemoryReport memoryReport) {
-        this.memoryReport = memoryReport;
+    public ApplicationService(String configFileName, String[] args, Path userDataDir) {
         com.typesafe.config.Config defaultTypesafeConfig = ConfigFactory.load(configFileName);
         defaultTypesafeConfig.checkValid(ConfigFactory.defaultReference(), configFileName);
 
@@ -168,8 +167,6 @@ public abstract class ApplicationService implements Service {
             log.info("Using custom config file");
         }
 
-        memoryReport.printPeriodically(config.getMemoryReportIntervalSec(), config.isIncludeThreadListInMemoryReport());
-
         DevMode.setDevMode(config.isDevMode());
 
         Locale locale = LocaleRepository.getDefaultLocale();
@@ -197,6 +194,10 @@ public abstract class ApplicationService implements Service {
         if (instanceLock == null) {
             throw new NoFileLockException("Another instance might be running", new Throwable("Unable to acquire lock file lock"));
         }
+    }
+
+    public CompletableFuture<Void> pruneAllBackups() {
+        return persistenceService.pruneAllBackups();
     }
 
     public CompletableFuture<Boolean> readAllPersisted() {

@@ -108,15 +108,15 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 
 
-    implementation("bisq:common:2.1.1")
+    //implementation("bisq:common:2.1.1")
     implementation(libs.typesafe.config)
     implementation(libs.annotations)
 
-    implementation("bisq:i18n:2.1.1")
+   /* implementation("bisq:i18n:2.1.1")
 
     implementation("bisq:persistence:2.1.1")
 
-    implementation("bisq:security:2.1.1")
+    implementation("bisq:security:2.1.1")*/
     implementation(libs.bouncycastle)
     implementation(libs.bouncycastle.pg)
     implementation(libs.typesafe.config)

@@ -1,6 +1,5 @@
 package bisq.application;
 
-import bisq.common.application.ShutDownHandler;
 import bisq.common.platform.PlatformUtils;
 import bisq.common.threading.ThreadName;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +27,15 @@ public abstract class Executable<T extends ApplicationService> implements ShutDo
         }));
 
         applicationService = createApplicationService(args);
+
+        long ts = System.currentTimeMillis();
+        applicationService.pruneAllBackups().join();
+        log.info("pruneAllBackups took {} ms", System.currentTimeMillis() - ts);
+
+        ts = System.currentTimeMillis();
         applicationService.readAllPersisted().join();
+        log.info("readAllPersisted took {} ms", System.currentTimeMillis() - ts);
+
         launchApplication(args);
     }
 

@@ -24,7 +24,6 @@ import bisq.bisq_easy.BisqEasyService;
 import bisq.bonded_roles.BondedRolesService;
 import bisq.bonded_roles.security_manager.alert.AlertNotificationsService;
 import bisq.chat.ChatService;
-import bisq.common.application.ShutDownHandler;
 import bisq.common.observable.Observable;
 import bisq.common.util.ExceptionUtil;
 import bisq.contract.ContractService;
@@ -43,10 +42,7 @@ import bisq.user.UserService;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-
 import java.nio.file.Path;
-import java.security.Security;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -92,17 +88,7 @@ public class AndroidApplicationService extends ApplicationService {
 
     public static AndroidApplicationService getInstance(Path userDataDir) {
         if (INSTANCE == null) {
-            AndroidApplicationService applicationService = new AndroidApplicationService(userDataDir,
-                    new String[]{},
-                    new ShutDownHandler() {
-                        @Override
-                        public void shutdown() {
-                        }
-
-                        @Override
-                        public void addShutDownHook(Runnable shutDownHandler) {
-                        }
-                    });
+            AndroidApplicationService applicationService = new AndroidApplicationService(userDataDir);
             log.info("Application service created");
             INSTANCE = applicationService;
         }
@@ -110,8 +96,8 @@ public class AndroidApplicationService extends ApplicationService {
     }
 
 
-    public AndroidApplicationService(Path userDataDir, String[] args, ShutDownHandler shutDownHandler) {
-        super("android", args, userDataDir, new AndroidMemoryReport());
+    public AndroidApplicationService(Path userDataDir) {
+        super("android", new String[]{}, userDataDir);
 
         securityService = new SecurityService(persistenceService, SecurityService.Config.from(getConfig("security")));
         networkService = new NetworkService(NetworkServiceConfig.from(config.getBaseDir(),
