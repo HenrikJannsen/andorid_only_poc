@@ -1,13 +1,9 @@
 package bisq.network.p2p.node.transport;
 
 import bisq.common.timer.Scheduler;
-import bisq.common.util.NetworkUtils;
-import bisq.network.NetworkService;
-import bisq.network.common.Address;
-import bisq.network.common.TransportConfig;
-import bisq.network.common.TransportType;
+import bisq.common.network.Address;
+import bisq.common.network.TransportConfig;
 import bisq.network.identity.NetworkId;
-import bisq.network.p2p.node.ConnectionException;
 import bisq.security.keys.KeyBundle;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -15,10 +11,8 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Path;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 

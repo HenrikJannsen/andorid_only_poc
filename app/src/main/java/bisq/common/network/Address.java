@@ -15,9 +15,8 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.network.common;
+package bisq.common.network;
 
-import bisq.common.platform.OS;
 import bisq.common.proto.NetworkProto;
 import bisq.common.util.StringUtils;
 import bisq.common.validation.NetworkDataValidation;

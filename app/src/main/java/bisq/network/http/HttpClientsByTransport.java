@@ -17,8 +17,8 @@
 
 package bisq.network.http;
 
-import bisq.network.common.TransportType;
-import bisq.network.http.utils.Socks5ProxyProvider;
+import bisq.common.network.TransportType;
+
 import com.runjva.sourceforge.jsocks.protocol.Socks5Proxy;
 
 import java.net.InetSocketAddress;
