@@ -10,7 +10,9 @@ import java.security.KeyPair;
 import java.security.Security;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
@@ -18,14 +20,18 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import bisq.chat.ChatChannelDomain;
 import bisq.chat.ChatMessage;
+import bisq.chat.ChatMessageType;
 import bisq.chat.ChatService;
 import bisq.chat.common.CommonPublicChatChannel;
 import bisq.chat.common.CommonPublicChatChannelService;
 import bisq.chat.common.CommonPublicChatMessage;
+import bisq.chat.two_party.TwoPartyPrivateChatChannel;
+import bisq.chat.two_party.TwoPartyPrivateChatMessage;
 import bisq.common.currency.MarketRepository;
 import bisq.common.encoding.Hex;
 import bisq.common.locale.LanguageRepository;
 import bisq.common.observable.Observable;
+import bisq.common.observable.Pin;
 import bisq.common.observable.collection.CollectionObserver;
 import bisq.common.observable.collection.ObservableSet;
 import bisq.common.timer.Scheduler;
@@ -34,7 +40,9 @@ import bisq.i18n.Res;
 import bisq.network.common.Address;
 import bisq.network.common.TransportType;
 import bisq.network.p2p.ServiceNode;
+import bisq.network.p2p.message.EnvelopePayloadMessage;
 import bisq.network.p2p.node.Node;
+import bisq.network.p2p.services.confidential.ConfidentialMessageService;
 import bisq.network.p2p.services.peer_group.PeerGroupManager;
 import bisq.security.DigestUtil;
 import bisq.security.pow.ProofOfWork;
@@ -69,6 +77,7 @@ public class AndroidApp {
 
             observeNetworkState();
             observeNumConnections();
+            observePrivateMessages();
             printMarketPrice();
 
             createUserIfNoneExist();
@@ -98,6 +107,68 @@ public class AndroidApp {
                 appendLog("Number of connections", currentNumConnections);
             }
         }).periodically(100);
+    }
+
+    private void observePrivateMessages() {
+        Map<String, Pin> pinByChannelId = new HashMap<>();
+        applicationService.getChatService().getTwoPartyPrivateChatChannelService().getChannels()
+                .addObserver(new CollectionObserver<>() {
+                    @Override
+                    public void add(TwoPartyPrivateChatChannel channel) {
+                        appendLog("Private channel", channel.getDisplayString());
+                        pinByChannelId.computeIfAbsent(channel.getId(),
+                                k -> channel.getChatMessages().addObserver(new CollectionObserver<>() {
+                                    @Override
+                                    public void add(TwoPartyPrivateChatMessage message) {
+                                        String text="";
+                                        switch (message.getChatMessageType()) {
+                                            case TEXT -> {
+                                                text = message.getText();
+                                            }
+                                            case LEAVE -> {
+                                                text = "PEER LEFT " + message.getText();
+                                                // leave handling not working yet correctly
+                                               /* Scheduler.run(()->applicationService.getChatService().getTwoPartyPrivateChatChannelService().leaveChannel(channel))
+                                                        .after(500);*/
+                                            }
+                                            case TAKE_BISQ_EASY_OFFER -> {
+                                                text = "TAKE_BISQ_EASY_OFFER " + message.getText();
+                                            }
+                                            case PROTOCOL_LOG_MESSAGE -> {
+                                                text = "PROTOCOL_LOG_MESSAGE " + message.getText();
+                                            }
+                                        }
+                                        String displayString = "[" + channel.getDisplayString() + "] " + text;
+                                        appendLog("Private message", displayString);
+                                    }
+
+                                    @Override
+                                    public void remove(Object o) {
+                                        // We do not support remove of PM
+                                    }
+
+                                    @Override
+                                    public void clear() {
+                                    }
+                                }));
+                    }
+
+                    @Override
+                    public void remove(Object o) {
+                        if (o instanceof TwoPartyPrivateChatChannel channel) {
+                            String id = channel.getId();
+                            if (pinByChannelId.containsKey(id)) {
+                                pinByChannelId.get(id).unbind();
+                                pinByChannelId.remove(id);
+                            }
+                            appendLog("Closed private channel", channel.getDisplayString());
+                        }
+                    }
+
+                    @Override
+                    public void clear() {
+                    }
+                });
     }
 
     private void observeAppState() {
