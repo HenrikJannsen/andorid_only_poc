@@ -90,13 +90,8 @@ public class AndroidApplicationService extends ApplicationService {
     private final FavouriteMarketsService favouriteMarketsService;
     private final DontShowAgainService dontShowAgainService;
 
-    public static AndroidApplicationService getInitializedInstance(Path userDataDir) {
+    public static AndroidApplicationService getInstance(Path userDataDir) {
         if (INSTANCE == null) {
-            // Androids default BC version does not support all algorithms we need, thus we remove
-            // it and add our BC provider
-            Security.removeProvider("BC");
-            Security.addProvider(new BouncyCastleProvider());
-
             AndroidApplicationService applicationService = new AndroidApplicationService(userDataDir,
                     new String[]{},
                     new ShutDownHandler() {
@@ -108,13 +103,12 @@ public class AndroidApplicationService extends ApplicationService {
                         public void addShutDownHook(Runnable shutDownHandler) {
                         }
                     });
-            applicationService.readAllPersisted().join();
-            applicationService.initialize().join();
-            log.info("Application service initialized");
+            log.info("Application service created");
             INSTANCE = applicationService;
         }
         return INSTANCE;
     }
+
 
     public AndroidApplicationService(Path userDataDir, String[] args, ShutDownHandler shutDownHandler) {
         super("android", args, userDataDir, new AndroidMemoryReport());

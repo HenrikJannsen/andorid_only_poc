@@ -44,13 +44,13 @@ public final class Server {
            Consumer<Exception> exceptionHandler) {
         serverSocket = serverSocketResult.getServerSocket();
         address = serverSocketResult.getAddress();
-        log.debug("Create server: {}", serverSocketResult);
+        log.info("Create server: {}", serverSocketResult);
         future = NetworkService.NETWORK_IO_POOL.submit(() -> {
             ThreadName.set(this, "listen-" + StringUtils.truncate(serverSocketResult.getAddress().toString()));
             try {
                 while (isNotStopped()) {
                     Socket socket = serverSocket.accept();
-                    log.debug("Accepted new connection on server: {}", serverSocketResult);
+                    log.info("Accepted new connection on server: {}", serverSocketResult);
                     if (isNotStopped()) {
                         // Call handler on new thread
                         NetworkService.NETWORK_IO_POOL.submit(() -> {

@@ -3,37 +3,41 @@ package bisq.app;
 
 import com.google.common.base.Joiner;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
 import java.nio.file.Path;
 import java.security.KeyPair;
+import java.security.Security;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicLong;
 
-import bisq.account.AccountService;
-import bisq.bonded_roles.BondedRolesService;
 import bisq.chat.ChatChannelDomain;
+import bisq.chat.ChatMessage;
 import bisq.chat.ChatService;
 import bisq.chat.common.CommonPublicChatChannel;
 import bisq.chat.common.CommonPublicChatChannelService;
+import bisq.chat.common.CommonPublicChatMessage;
 import bisq.common.currency.MarketRepository;
 import bisq.common.encoding.Hex;
+import bisq.common.locale.LanguageRepository;
 import bisq.common.observable.Observable;
+import bisq.common.observable.collection.CollectionObserver;
 import bisq.common.observable.collection.ObservableSet;
 import bisq.common.timer.Scheduler;
 import bisq.common.util.MathUtils;
 import bisq.i18n.Res;
-import bisq.identity.IdentityService;
-import bisq.network.NetworkService;
 import bisq.network.common.Address;
 import bisq.network.common.TransportType;
 import bisq.network.p2p.ServiceNode;
 import bisq.network.p2p.node.Node;
 import bisq.network.p2p.services.peer_group.PeerGroupManager;
 import bisq.security.DigestUtil;
-import bisq.security.keys.KeyBundleService;
 import bisq.security.pow.ProofOfWork;
-import bisq.settings.SettingsService;
 import bisq.user.UserService;
 import bisq.user.identity.NymIdGenerator;
 import bisq.user.identity.UserIdentity;
@@ -43,67 +47,88 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class AndroidApp {
-    private final AndroidApplicationService androidApplicationService;
-    private final String defaultKeyId;
-    private final KeyPair keyPair;
+    private final AndroidApplicationService applicationService;
     public final List<String> logMessages = new ArrayList<>();
     public final Observable<String> logMessage = new Observable<>("");
 
     public AndroidApp(Path userDataDir, boolean isRunningInAndroidEmulator) {
         Address.setIsRunningInAndroidEmulator(isRunningInAndroidEmulator);
-        androidApplicationService = AndroidApplicationService.getInitializedInstance(userDataDir);
 
-        //i18n
-        androidApplicationService.getState().addObserver(state -> appendLog("App state", Res.get("splash.applicationServiceState." + state.name())));
+        // Androids default BC version does not support all algorithms we need, thus we remove
+        // it and add our BC provider
+        Security.removeProvider("BC");
+        Security.addProvider(new BouncyCastleProvider());
 
-        // security
-        KeyBundleService keyBundleService = androidApplicationService.getSecurityService().getKeyBundleService();
-        defaultKeyId = keyBundleService.getDefaultKeyId();
-        keyPair = keyBundleService.getOrCreateKeyBundle(defaultKeyId).getKeyPair();
+        applicationService = AndroidApplicationService.getInstance(userDataDir);
+        CompletableFuture.runAsync(() -> {
+            observeAppState();
+            printDefaultKey();
+            printLanguageCode();
+            applicationService.readAllPersisted().join();
+            applicationService.initialize().join();
 
-        appendLog("defaultKeyId", defaultKeyId);
-        appendLog("default pub key as hex", Hex.encode(keyPair.getPublic().getEncoded()));
+            observeNetworkState();
+            observeNumConnections();
+            printMarketPrice();
 
-        // network
-        NetworkService networkService = androidApplicationService.getNetworkService();
-        networkService.getDefaultNodeStateByTransportType().get(TransportType.CLEAR)
+            createUserIfNoneExist();
+            printUserProfiles();
+
+            publishRandomChatMessage();
+            observeChatMessages(5);
+        });
+    }
+
+    private void observeNetworkState() {
+        Optional.ofNullable(applicationService.getNetworkService().getDefaultNodeStateByTransportType().get(TransportType.CLEAR))
+                .orElseThrow()
                 .addObserver(state -> appendLog("Network state", state));
+    }
 
-        ServiceNode serviceNode = networkService.getServiceNodesByTransport().findServiceNode(TransportType.CLEAR).orElseThrow();
+    private void observeNumConnections() {
+        ServiceNode serviceNode = applicationService.getNetworkService().getServiceNodesByTransport().findServiceNode(TransportType.CLEAR).orElseThrow();
         Node defaultNode = serviceNode.getDefaultNode();
         PeerGroupManager peerGroupManager = serviceNode.getPeerGroupManager().orElseThrow();
         var peerGroupService = peerGroupManager.getPeerGroupService();
-
+        AtomicLong numConnections = new AtomicLong();
         Scheduler.run(() -> {
-            long numConnections = peerGroupService.getAllConnectedPeers(defaultNode).count();
-            appendLog("numConnections", numConnections);
-        }).repeated(1000, 3);
+            long currentNumConnections = peerGroupService.getAllConnectedPeers(defaultNode).count();
+            if (numConnections.get() != currentNumConnections) {
+                numConnections.set(currentNumConnections);
+                appendLog("Number of connections", currentNumConnections);
+            }
+        }).periodically(100);
+    }
 
-        // identity
-        IdentityService identityService = androidApplicationService.getIdentityService();
+    private void observeAppState() {
+        applicationService.getState().addObserver(state -> appendLog("Application state", Res.get("splash.applicationServiceState." + state.name())));
+    }
 
-        // account
-        AccountService accountService = androidApplicationService.getAccountService();
+    private void printDefaultKey() {
+        appendLog("Default key ID", applicationService.getSecurityService().getKeyBundleService().getDefaultKeyId());
+    }
 
-        // settings
-        SettingsService settingsService = androidApplicationService.getSettingsService();
-        appendLog("LanguageCode", settingsService.getLanguageCode().get());
+    private void printLanguageCode() {
+        appendLog("Language", LanguageRepository.getDisplayLanguage(applicationService.getSettingsService().getLanguageCode().get()));
+    }
 
-        // bonded roles
-        BondedRolesService bondedRolesService = androidApplicationService.getBondedRolesService();
-        String priceQuote = bondedRolesService.getMarketPriceService().findMarketPrice(MarketRepository.getUSDBitcoinMarket())
-                .map(e -> MathUtils.roundDouble(e.getPriceQuote().getValue() / 10000d, 2) + " BTC/USD")
-                .orElse("N/A");
-        appendLog("USD market price", priceQuote);
+    private void printMarketPrice() {
+        Optional<String> priceQuote = applicationService.getBondedRolesService().getMarketPriceService()
+                .findMarketPrice(MarketRepository.getUSDBitcoinMarket())
+                .map(e -> MathUtils.roundDouble(e.getPriceQuote().getValue() / 10000d, 2) + " BTC/USD");
+        if (priceQuote.isEmpty()) {
+            Scheduler.run(this::printMarketPrice).after(500);
+        } else {
+            appendLog("Market price", priceQuote.get());
+        }
+    }
 
-        // User
-        UserService userService = androidApplicationService.getUserService();
-        UserIdentityService userIdentityService = userService.getUserIdentityService();
-
+    private void createUserIfNoneExist() {
+        UserIdentityService userIdentityService = applicationService.getUserService().getUserIdentityService();
         ObservableSet<UserIdentity> userIdentities = userIdentityService.getUserIdentities();
         if (userIdentities.isEmpty()) {
-            String nickName = "Android user " + new Random().nextInt(100);
-            KeyPair keyPair = keyBundleService.generateKeyPair();
+            String nickName = "Android " + new Random().nextInt(100);
+            KeyPair keyPair = applicationService.getSecurityService().getKeyBundleService().generateKeyPair();
             byte[] pubKeyHash = DigestUtil.hash(keyPair.getPublic().getEncoded());
             ProofOfWork proofOfWork = userIdentityService.mintNymProofOfWork(pubKeyHash);
             byte[] powSolution = proofOfWork.getSolution();
@@ -126,34 +151,79 @@ public class AndroidApp {
                     proofOfWork,
                     avatarVersion,
                     terms,
-                    statement);
-        } else {
-            userIdentities.stream()
-                    .map(userIdentity -> userIdentity.getUserProfile())
-                    .map(userProfile -> userProfile.getUserName() + " [" + userProfile.getNym() + "]")
-                    .forEach(userName -> appendLog("Existing profile", userName));
+                    statement).join();
         }
+    }
 
-        // chat
-        ChatService chatService = androidApplicationService.getChatService();
+    private void printUserProfiles() {
+        applicationService.getUserService().getUserIdentityService().getUserIdentities().stream()
+                .map(UserIdentity::getUserProfile)
+                .map(userProfile -> userProfile.getUserName() + " [" + userProfile.getNym() + "]")
+                .forEach(userName -> appendLog("My profile", userName));
+
+    }
+
+    private void publishRandomChatMessage() {
+        UserService userService = applicationService.getUserService();
+        UserIdentityService userIdentityService = userService.getUserIdentityService();
+        ChatService chatService = applicationService.getChatService();
         ChatChannelDomain chatChannelDomain = ChatChannelDomain.DISCUSSION;
         CommonPublicChatChannelService discussionChannelService = chatService.getCommonPublicChatChannelServices().get(chatChannelDomain);
         CommonPublicChatChannel channel = discussionChannelService.getChannels().stream().findFirst().orElseThrow();
         UserIdentity userIdentity = userIdentityService.getSelectedUserIdentity();
-        discussionChannelService.publishChatMessage("My random message " + new Random().nextInt(100),
+        discussionChannelService.publishChatMessage("Message " + new Random().nextInt(100),
                 Optional.empty(),
                 channel,
                 userIdentity);
+    }
+
+    private void observeChatMessages(int numLastMessages) {
+        UserService userService = applicationService.getUserService();
+        ChatService chatService = applicationService.getChatService();
+        ChatChannelDomain chatChannelDomain = ChatChannelDomain.DISCUSSION;
+        CommonPublicChatChannelService discussionChannelService = chatService.getCommonPublicChatChannelServices().get(chatChannelDomain);
+        CommonPublicChatChannel channel = discussionChannelService.getChannels().stream().findFirst().orElseThrow();
+        int toSkip = Math.max(0, channel.getChatMessages().size() - numLastMessages);
+        List<String> displayedMessages = new ArrayList<>();
         channel.getChatMessages().stream()
+                .sorted(Comparator.comparingLong(ChatMessage::getDate))
                 .map(message -> {
+                    displayedMessages.add(message.getId());
                     String authorUserProfileId = message.getAuthorUserProfileId();
                     String userName = userService.getUserProfileService().findUserProfile(authorUserProfileId)
                             .map(UserProfile::getUserName)
                             .orElse("N/A");
-                    String text = message.getText();
-                    return userName + ": " + text;
+                    return "{" + userName + "} " + message.getText();
                 })
-                .forEach(e -> appendLog("Chat message:", e));
+                .skip(toSkip)
+                .forEach(e -> appendLog("Chat message", e));
+
+        channel.getChatMessages().addObserver(new CollectionObserver<>() {
+            @Override
+            public void add(CommonPublicChatMessage message) {
+                if (displayedMessages.contains(message.getId())) {
+                    return;
+                }
+                displayedMessages.add(message.getId());
+                String authorUserProfileId = message.getAuthorUserProfileId();
+                String userName = userService.getUserProfileService().findUserProfile(authorUserProfileId)
+                        .map(UserProfile::getUserName)
+                        .orElse("N/A");
+                String text = message.getText();
+                String displayString = "{" + userName + "} " + text;
+                appendLog("Chat message", displayString);
+            }
+
+            @Override
+            public void remove(Object o) {
+                if (o instanceof CommonPublicChatMessage message)
+                    appendLog("Removed chat message", message.getText());
+            }
+
+            @Override
+            public void clear() {
+            }
+        });
     }
 
     private void appendLog(String key, Object value) {
