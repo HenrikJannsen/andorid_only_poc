@@ -28,7 +28,9 @@ import bisq.chat.two_party.TwoPartyPrivateChatChannel;
 import bisq.chat.two_party.TwoPartyPrivateChatMessage;
 import bisq.common.currency.MarketRepository;
 import bisq.common.encoding.Hex;
+import bisq.common.facades.FacadeProvider;
 import bisq.common.locale.LanguageRepository;
+import bisq.common.network.AndroidEmulatorLocalhostFacade;
 import bisq.common.observable.Observable;
 import bisq.common.observable.Pin;
 import bisq.common.observable.collection.CollectionObserver;
@@ -57,7 +59,7 @@ public class AndroidApp {
     public final Observable<String> logMessage = new Observable<>("");
 
     public AndroidApp(Path userDataDir, boolean isRunningInAndroidEmulator) {
-        Address.setIsRunningInAndroidEmulator(isRunningInAndroidEmulator);
+        FacadeProvider.setLocalhostFacade(new AndroidEmulatorLocalhostFacade());
 
         // Androids default BC version does not support all algorithms we need, thus we remove
         // it and add our BC provider

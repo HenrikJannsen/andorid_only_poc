@@ -18,7 +18,7 @@
 package bisq.network.http;
 
 import bisq.common.network.TransportType;
-
+import bisq.network.http.utils.Socks5ProxyProvider;
 import com.runjva.sourceforge.jsocks.protocol.Socks5Proxy;
 
 import java.net.InetSocketAddress;
@@ -35,7 +35,14 @@ public class HttpClientsByTransport {
                                         Optional<Socks5Proxy> socksProxy,
                                         Optional<String> socks5ProxyAddress) {
         return switch (transportType) {
-            case TOR ->  null;
+            case TOR -> {
+                Socks5ProxyProvider socks5ProxyProvider = socks5ProxyAddress
+                        .map(Socks5ProxyProvider::new)
+                        .orElse(socksProxy.map(Socks5ProxyProvider::new)
+                                .orElseThrow(() -> new RuntimeException("No socks5ProxyAddress provided and no Tor socksProxy available.")));
+                yield new TorHttpClient(url, userAgent, socks5ProxyProvider);
+                // If we have a socks5ProxyAddress defined in options we use that as proxy
+            }
             case I2P ->
                 // The I2P router exposes a local HTTP proxy on port 4444 for I2P destinations
                 // Note: only works with external I2P router (embedded one doesn't provide this proxy by default)

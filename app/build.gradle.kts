@@ -128,6 +128,7 @@ dependencies {
     // implementation("bisq:network-identity:2.1.1")
     implementation(libs.chimp.jsocks)
     implementation(libs.failsafe)
+    implementation(libs.apache.httpcomponents.httpclient)
 
     //tor
     implementation(libs.tukaani)
@@ -176,6 +177,7 @@ android {
         resources {
             // Exclude the conflicting META-INF files
             excludes.add("META-INF/versions/9/OSGI-INF/MANIFEST.MF")
+            excludes.add("META-INF/DEPENDENCIES")
         }
     }
 }
