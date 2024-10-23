@@ -18,6 +18,7 @@
 package bisq.network.p2p.node.transport;
 
 import bisq.common.network.Address;
+import bisq.tor.onionservice.CreateOnionServiceResponse;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
@@ -36,4 +37,7 @@ public final class ServerSocketResult {
         this.address = address;
     }
 
+    public ServerSocketResult(CreateOnionServiceResponse response) {
+        this(response.getServerSocket(), Address.fromFullAddress(response.getOnionAddress().toString()));
+    }
 }

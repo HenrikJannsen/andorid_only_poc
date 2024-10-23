@@ -131,7 +131,6 @@ public class ClearNetTransportService implements TransportService {
 
     @Override
     public Socket getSocket(Address address) throws IOException {
-        address = Address.toHostSystemLocalHostAddress(address);
         log.debug("Create new Socket to {}", address);
         maybeSimulateDelay();
         Socket socket = new Socket(address.getHost(), address.getPort());

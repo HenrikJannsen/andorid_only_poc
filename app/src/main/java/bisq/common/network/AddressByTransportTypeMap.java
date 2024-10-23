@@ -139,7 +139,7 @@ public final class AddressByTransportTypeMap implements Map<TransportType, Addre
     }
 
     @Override
-    public Set<Entry<TransportType, Address>> entrySet() {
+    public Set<Map.Entry<TransportType, Address>> entrySet() {
         return map.entrySet();
     }
 }

@@ -19,6 +19,7 @@ package bisq.network.p2p;
 
 
 import bisq.common.observable.Observable;
+import bisq.common.platform.MemoryReportService;
 import bisq.network.NetworkService;
 import bisq.common.network.Address;
 import bisq.common.network.TransportType;
@@ -82,7 +83,7 @@ public class ServiceNode implements Node.Listener {
     }
 
     public interface Listener {
-        void onStateChanged(State state);
+        void onStateChanged(ServiceNode.State state);
     }
 
     public enum State {
@@ -116,6 +117,7 @@ public class ServiceNode implements Node.Listener {
     private final Set<Address> seedNodeAddresses;
     @Getter
     private final TransportType transportType;
+    private final MemoryReportService memoryReportService;
     private final NetworkLoadSnapshot networkLoadSnapshot;
 
     @Getter
@@ -158,7 +160,8 @@ public class ServiceNode implements Node.Listener {
                 Optional<ResendMessageService> resendMessageService,
                 AuthorizationService authorizationService,
                 Set<Address> seedNodeAddresses,
-                TransportType transportType) {
+                TransportType transportType,
+                MemoryReportService memoryReportService) {
         this.config = config;
         this.nodeConfig = nodeConfig;
         this.peerGroupServiceConfig = peerGroupServiceConfig;
@@ -168,6 +171,7 @@ public class ServiceNode implements Node.Listener {
         this.messageDeliveryStatusService = messageDeliveryStatusService;
         this.seedNodeAddresses = seedNodeAddresses;
         this.transportType = transportType;
+        this.memoryReportService = memoryReportService;
 
         this.networkLoadSnapshot = new NetworkLoadSnapshot();
 
@@ -240,21 +244,22 @@ public class ServiceNode implements Node.Listener {
                         messageDeliveryStatusService)) :
                 Optional.empty();
 
-        reportRequestService = supportedServices.contains(SupportedService.REPORT_REQUEST) ?
+        reportRequestService = supportedServices.contains(ServiceNode.SupportedService.REPORT_REQUEST) ?
                 Optional.of(new ReportRequestService(defaultNode)) :
                 Optional.empty();
-        reportResponseService = supportedServices.contains(SupportedService.DATA) &&
-                supportedServices.contains(SupportedService.PEER_GROUP) &&
-                supportedServices.contains(SupportedService.MONITOR) &&
-                supportedServices.contains(SupportedService.REPORT_RESPONSE) ?
+        reportResponseService = supportedServices.contains(ServiceNode.SupportedService.DATA) &&
+                supportedServices.contains(ServiceNode.SupportedService.PEER_GROUP) &&
+                supportedServices.contains(ServiceNode.SupportedService.MONITOR) &&
+                supportedServices.contains(ServiceNode.SupportedService.REPORT_RESPONSE) ?
                 Optional.of(new ReportResponseService(defaultNode,
                         dataService.orElseThrow(),
-                        networkLoadSnapshot)) :
+                        networkLoadSnapshot,
+                        memoryReportService)) :
                 Optional.empty();
 
-        networkLoadService = supportedServices.contains(SupportedService.DATA) &&
-                supportedServices.contains(SupportedService.PEER_GROUP) &&
-                supportedServices.contains(SupportedService.MONITOR) ?
+        networkLoadService = supportedServices.contains(ServiceNode.SupportedService.DATA) &&
+                supportedServices.contains(ServiceNode.SupportedService.PEER_GROUP) &&
+                supportedServices.contains(ServiceNode.SupportedService.MONITOR) ?
                 Optional.of(new NetworkLoadService(this,
                         dataService.orElseThrow().getStorageService(),
                         networkLoadSnapshot,

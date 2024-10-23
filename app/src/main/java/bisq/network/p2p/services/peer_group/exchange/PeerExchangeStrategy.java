@@ -57,7 +57,7 @@ public class PeerExchangeStrategy {
         }
 
         public static Config from(com.typesafe.config.Config typesafeConfig) {
-            return new Config(
+            return new PeerExchangeStrategy.Config(
                     typesafeConfig.getInt("numSeedNodesAtBoostrap"),
                     typesafeConfig.getInt("numPersistedPeersAtBoostrap"),
                     typesafeConfig.getInt("numReportedPeersAtBoostrap"),

@@ -25,6 +25,7 @@ import bisq.bonded_roles.BondedRolesService;
 import bisq.bonded_roles.security_manager.alert.AlertNotificationsService;
 import bisq.chat.ChatService;
 import bisq.common.observable.Observable;
+import bisq.common.platform.MemoryReportService;
 import bisq.common.util.ExceptionUtil;
 import bisq.contract.ContractService;
 import bisq.identity.IdentityService;
@@ -105,7 +106,8 @@ public class AndroidApplicationService extends ApplicationService {
                 persistenceService,
                 securityService.getKeyBundleService(),
                 securityService.getHashCashProofOfWorkService(),
-                securityService.getEquihashProofOfWorkService());
+                securityService.getEquihashProofOfWorkService(),
+                new AndroidMemoryReportService());
 
         identityService = new IdentityService(persistenceService,
                 securityService.getKeyBundleService(),

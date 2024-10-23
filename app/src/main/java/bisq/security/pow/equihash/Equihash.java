@@ -17,15 +17,12 @@
 
 package bisq.security.pow.equihash;
 
-import bisq.common.guava.GuavaAndroidFunctionProvider;
-import bisq.common.guava.GuavaFunctionProvider;
 import bisq.common.platform.OS;
 import bisq.common.util.ByteArrayUtils;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.primitives.*;
-import lombok.Setter;
 import lombok.ToString;
 import org.bouncycastle.crypto.digests.Blake2bDigest;
 
@@ -36,6 +33,7 @@ import java.util.*;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static bisq.common.facades.FacadeProvider.getGuavaFacade;
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.math.BigInteger.ONE;
 
@@ -80,10 +78,8 @@ public class Equihash {
     private static final boolean IS_ANDROID = OS.isAndroid();
 
     // Guava has different APIs for Java SE and Android.
-    // To allow re-usability on Android we apply the Android version here. The Java SE version can be set from the
-    // application service to override the Android version.
-    @Setter
-    private static GuavaFunctionProvider guavaFunctionProvider = new GuavaAndroidFunctionProvider();
+    // Thus, we use a facade with Android compatible APIs by default and let the Desktop app set the Java SE facade
+    // containing APIs only supported for Java SE compatible JDKs.
     private final int k, N;
     private final int tableCapacity;
     private final int inputNum, inputBits;
@@ -255,7 +251,7 @@ public class Equihash {
             }
             return IntStream.range(0, table.numRows)
                     .mapToObj(table::getRow)
-                    .filter(row -> guavaFunctionProvider.getToIntStreamFunction().apply(row).distinct().count() == inputNum)
+                    .filter(row -> getGuavaFacade().toIntStream(row).distinct().count() == inputNum)
                     .map(row -> sortInputs(row.toArray()))
                     .filter(this::testDifficultyCondition);
         }
@@ -269,8 +265,8 @@ public class Equihash {
                 int[] hash = hashInputs(i);
                 return IntStream.range(0, k + 2).map(j -> j <= k ? hash[j] & (N / 2 - 1) : i);
             });
-            IntStream parallelIntStream = guavaFunctionProvider.getToParallelFunction().apply(tableValues);
-            ImmutableIntArray immutableIntArray = guavaFunctionProvider.getCopyOfFunction().apply(parallelIntStream);
+            IntStream parallelIntStream = getGuavaFacade().parallel(tableValues);
+            ImmutableIntArray immutableIntArray = getGuavaFacade().copyOf(parallelIntStream);
             return new XorTable(k + 1, 1, immutableIntArray);
         }
 

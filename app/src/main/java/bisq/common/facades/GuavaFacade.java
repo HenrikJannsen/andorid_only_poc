@@ -15,26 +15,16 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.common.guava;
+package bisq.common.facades;
 
 import com.google.common.primitives.ImmutableIntArray;
 
-import java.util.function.Function;
 import java.util.stream.IntStream;
 
-public class GuavaAndroidFunctionProvider implements GuavaFunctionProvider {
-    public Function<ImmutableIntArray, IntStream> getToIntStreamFunction() {
-        return array -> IntStream.range(0, array.length()).map(array::get);
-    }
+public interface GuavaFacade {
+    IntStream toIntStream(ImmutableIntArray array);
 
-    public Function<IntStream, IntStream> getToParallelFunction() {
-        return intStream -> {
-            ImmutableIntArray array = ImmutableIntArray.copyOf(intStream.toArray());
-            return IntStream.range(0, array.length()).map(array::get).parallel();
-        };
-    }
+    IntStream parallel(IntStream value);
 
-    public Function<IntStream, ImmutableIntArray> getCopyOfFunction() {
-        return intStream -> ImmutableIntArray.copyOf(intStream.toArray());
-    }
+    ImmutableIntArray copyOf(IntStream value);
 }

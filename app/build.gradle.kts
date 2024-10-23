@@ -129,6 +129,13 @@ dependencies {
     implementation(libs.chimp.jsocks)
     implementation(libs.failsafe)
 
+    //tor
+    implementation(libs.tukaani)
+    implementation(libs.chimp.jsocks)
+    implementation(libs.chimp.jtorctl)
+
+    //i2p
+    implementation(libs.bundles.i2p)
 
     // implementation("bisq:identity:2.1.1") // cannot be used until network dependencies are fixed. -> Could not find network:network-common:.
 

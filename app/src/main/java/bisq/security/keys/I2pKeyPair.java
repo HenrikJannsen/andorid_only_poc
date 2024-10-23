@@ -26,7 +26,7 @@ public class I2pKeyPair implements PersistableProto {
     }
 
     @Override
-    public I2PKeyPair toProto(boolean serializeForHash) {
+    public bisq.security.protobuf.I2PKeyPair toProto(boolean serializeForHash) {
         return resolveProto(serializeForHash);
     }
 
@@ -38,7 +38,7 @@ public class I2pKeyPair implements PersistableProto {
                 .setDestination(destination);
     }
 
-    public static I2pKeyPair fromProto(I2PKeyPair proto) {
+    public static I2pKeyPair fromProto(bisq.security.protobuf.I2PKeyPair proto) {
         return new I2pKeyPair(proto.getPrivateKey().toByteArray(),
                 proto.getPublicKey().toByteArray(),
                 proto.getDestination());

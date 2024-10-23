@@ -51,8 +51,8 @@ public class SecurityService implements Service {
             this.keyBundle = keyBundle;
         }
 
-        public static Config from(com.typesafe.config.Config config) {
-            return new Config(config.getConfig("keyBundle"));
+        public static SecurityService.Config from(com.typesafe.config.Config config) {
+            return new SecurityService.Config(config.getConfig("keyBundle"));
         }
     }
 

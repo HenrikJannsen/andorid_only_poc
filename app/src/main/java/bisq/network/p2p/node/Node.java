@@ -97,7 +97,7 @@ public class Node implements Connection.Handler {
         default void onShutdown(Node node) {
         }
 
-        default void onStateChange(State state) {
+        default void onStateChange(Node.State state) {
         }
     }
 
@@ -737,7 +737,7 @@ public class Node implements Connection.Handler {
     }
 
     public boolean isInitialized() {
-        return getState().get() == State.RUNNING;
+        return getState().get() == Node.State.RUNNING;
     }
 
     @Override
@@ -801,11 +801,7 @@ public class Node implements Connection.Handler {
                         log.info("Exception: {}", ExceptionUtil.getRootCauseMessage(exception));
                         break;
                     case AUTHORIZATION_FAILED:
-                        log.warn(msg, exception);
-                        break;
                     case ONION_ADDRESS_VERIFICATION_FAILED:
-                        log.warn(msg, exception);
-                        break;
                     case ADDRESS_BANNED:
                         log.warn(msg, exception);
                         break;

@@ -58,7 +58,7 @@ public class PeerGroupManager implements Node.Listener {
     }
 
     public interface Listener {
-        void onStateChanged(State state);
+        void onStateChanged(PeerGroupManager.State state);
     }
 
     @Getter
@@ -128,7 +128,7 @@ public class PeerGroupManager implements Node.Listener {
     private Optional<Scheduler> maybeCreateConnectionsScheduler = Optional.empty();
 
     @Getter
-    public final AtomicReference<State> state = new AtomicReference<>(State.NEW);
+    public final AtomicReference<PeerGroupManager.State> state = new AtomicReference<>(PeerGroupManager.State.NEW);
     private final Set<Listener> listeners = new CopyOnWriteArraySet<>();
 
     private final RetryPolicy<Boolean> retryPolicy;
@@ -206,7 +206,7 @@ public class PeerGroupManager implements Node.Listener {
         State state = getState().get();
         switch (state) {
             case NEW:
-                setState(State.STARTING);
+                setState(PeerGroupManager.State.STARTING);
                 // blocking
                 peerExchangeService.startInitialPeerExchange();
                 log.info("Completed startInitialPeerExchange. Start periodic tasks with interval: {} sec",
@@ -398,15 +398,15 @@ public class PeerGroupManager implements Node.Listener {
         }
     }
 
-    public void addListener(Listener listener) {
+    public void addListener(PeerGroupManager.Listener listener) {
         listeners.add(listener);
     }
 
-    public void removeListener(Listener listener) {
+    public void removeListener(PeerGroupManager.Listener listener) {
         listeners.remove(listener);
     }
 
-    private void setState(State newState) {
+    private void setState(PeerGroupManager.State newState) {
         checkArgument(state.get().ordinal() < newState.ordinal(),
                 "New state %s must have a higher ordinal as the current state %s", newState, state.get());
         state.set(newState);

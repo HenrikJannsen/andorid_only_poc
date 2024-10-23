@@ -186,7 +186,7 @@ public class InboundConnectionsManager {
             Address peerAddress = handshakeRequest.getCapability().getAddress();
 
             log.debug("Sending PoW response to peer {}", peerAddress.getFullAddress());
-            NetworkEnvelope responseEnvelope = requestAndResponseNetworkEnvelopes.getSecond();
+            bisq.network.p2p.message.NetworkEnvelope responseEnvelope = requestAndResponseNetworkEnvelopes.getSecond();
             try {
                 networkEnvelopeSocketChannel.send(responseEnvelope);
             } catch (IOException e) {

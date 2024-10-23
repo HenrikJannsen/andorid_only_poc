@@ -224,7 +224,7 @@ public class ConfidentialMessageService implements Node.Listener, DataService.Li
             }, NETWORK_IO_POOL);
 
             // The connection timeout is 120 seconds, we add a bit more here as it should never get triggered anyway.
-            boolean notTimedOut = countDownLatch.await(2, TimeUnit.SECONDS);
+            boolean notTimedOut = countDownLatch.await(150, TimeUnit.SECONDS);
             checkArgument(notTimedOut, "Neither isPeerOffline resulted in a true result nor we got a connection created in 150 seconds. receiverAddress=" + receiverAddress);
 
             if (peerDetectedOffline.get()) {

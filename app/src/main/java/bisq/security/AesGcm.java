@@ -27,7 +27,7 @@ import java.security.*;
 
 public class AesGcm {
     static {
-        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
+        if (java.security.Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
             Security.addProvider(new BouncyCastleProvider());
         }
     }

@@ -67,7 +67,7 @@ public class PeerGroupService implements PersistenceClient<PeerGroupStore> {
         }
 
         public static Config from(com.typesafe.config.Config typesafeConfig) {
-            return new Config(
+            return new PeerGroupService.Config(
                     typesafeConfig.getInt("minNumConnectedPeers"),
                     typesafeConfig.getInt("minNumOutboundConnectedPeers"),
                     typesafeConfig.getInt("maxNumConnectedPeers"),

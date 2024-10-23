@@ -15,17 +15,14 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.common.guava;
+package bisq.tor.process;
 
-import com.google.common.primitives.ImmutableIntArray;
+public class CouldNotWaitForTorShutdownException extends RuntimeException {
+    public CouldNotWaitForTorShutdownException(String message) {
+        super(message);
+    }
 
-import java.util.function.Function;
-import java.util.stream.IntStream;
-
-public interface GuavaFunctionProvider {
-     Function<ImmutableIntArray, IntStream> getToIntStreamFunction();
-
-     Function<IntStream, IntStream> getToParallelFunction();
-
-     Function<IntStream, ImmutableIntArray> getCopyOfFunction();
+    public CouldNotWaitForTorShutdownException(Throwable cause) {
+        super(cause);
+    }
 }

@@ -20,35 +20,19 @@ package bisq.common.network;
 import bisq.common.proto.NetworkProto;
 import bisq.common.util.StringUtils;
 import bisq.common.validation.NetworkDataValidation;
-
 import com.google.common.net.InetAddresses;
-
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.StringTokenizer;
 
 import static com.google.common.base.Preconditions.checkArgument;
-@Slf4j
+
 @EqualsAndHashCode
 @Getter
 public final class Address implements NetworkProto, Comparable<Address> {
-    private static boolean isRunningInAndroidEmulator = false;
-
-    public static void setIsRunningInAndroidEmulator(boolean isRunningInAndroidEmulator) {
-        Address.isRunningInAndroidEmulator = isRunningInAndroidEmulator;
-    }
-
     public static Address localHost(int port) {
-        if (isRunningInAndroidEmulator) {
-            // For an android app running in the emulator the socket servers localhost address is 10.0.2.15
-            log.info("The android app is running in the emulator. We convert our socket server localhost " +
-                    "address `127.0.0.1` to `10.0.2.15`");
-            return new Address("10.0.2.15", port);
-        } else {
-            return new Address("127.0.0.1", port);
-        }
+        return new Address("127.0.0.1", port);
     }
 
     public static Address fromFullAddress(String fullAddress) {
@@ -67,6 +51,10 @@ public final class Address implements NetworkProto, Comparable<Address> {
         this.port = port;
 
         verify();
+    }
+
+    public static void setIsRunningInAndroidEmulator(boolean isRunningInAndroidEmulator) {
+
     }
 
 
@@ -142,18 +130,6 @@ public final class Address implements NetworkProto, Comparable<Address> {
 
     private static String maybeConvertLocalHost(String host) {
         return host.equals("localhost") ? "127.0.0.1" : host;
-    }
-
-    public static Address toHostSystemLocalHostAddress(Address address) {
-        if (isRunningInAndroidEmulator && address.getHost().equals("127.0.0.1")) {
-            // For an android app running in the emulator the host systems localhost is 10.0.2.2
-            String host = address.getHost().replace("127.0.0.1", "10.0.2.2");
-            log.info("The android app is running in the emulator. We convert target localhost " +
-                    "address `127.0.0.1` to `10.0.2.2`");
-            return new Address(host, address.getPort());
-        } else {
-            return address;
-        }
     }
 
     @Override

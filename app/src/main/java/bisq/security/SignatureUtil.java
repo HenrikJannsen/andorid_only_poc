@@ -31,7 +31,7 @@ public class SignatureUtil {
     public static final String SHA256withDSA = "SHA256withDSA";
 
     static {
-        if (Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
+        if (java.security.Security.getProvider(BouncyCastleProvider.PROVIDER_NAME) == null) {
             Security.addProvider(new BouncyCastleProvider());
         }
     }

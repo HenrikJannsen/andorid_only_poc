@@ -81,7 +81,7 @@ public class DataService implements StorageService.Listener {
 
     @Getter
     private final StorageService storageService;
-    private final Set<Listener> listeners = new CopyOnWriteArraySet<>();
+    private final Set<DataService.Listener> listeners = new CopyOnWriteArraySet<>();
     private final Set<Broadcaster> broadcasters = new CopyOnWriteArraySet<>();
 
     public DataService(PersistenceService persistenceService) {
@@ -369,11 +369,11 @@ public class DataService implements StorageService.Listener {
     // Listener
     ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void addListener(Listener listener) {
+    public void addListener(DataService.Listener listener) {
         listeners.add(listener);
     }
 
-    public void removeListener(Listener listener) {
+    public void removeListener(DataService.Listener listener) {
         listeners.remove(listener);
     }
 

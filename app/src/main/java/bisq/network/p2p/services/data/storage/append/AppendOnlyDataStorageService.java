@@ -90,11 +90,11 @@ public class AppendOnlyDataStorageService extends DataStorageService<AddAppendOn
         super.shutdown();
     }
 
-    public void addListener(Listener listener) {
+    public void addListener(AppendOnlyDataStorageService.Listener listener) {
         listeners.add(listener);
     }
 
-    public void removeListener(Listener listener) {
+    public void removeListener(AppendOnlyDataStorageService.Listener listener) {
         listeners.remove(listener);
     }
 }
