@@ -71,10 +71,11 @@ public class MainController {
     public void initialize() {
         CompletableFuture.runAsync(() -> {
             observeAppState();
-            printDefaultKey();
-            printLanguageCode();
             applicationService.readAllPersisted().join();
             applicationService.initialize().join();
+
+            printDefaultKeyId();
+            printLanguageCode();
 
             if (userIdentityService.getUserIdentities().isEmpty()) {
                 //createUserIfNoneExist();
@@ -88,10 +89,10 @@ public class MainController {
 
             observeNetworkState();
             observeNumConnections();
-            observePrivateMessages();
             printMarketPrice();
 
-           // publishRandomChatMessage();
+            observePrivateMessages();
+            // publishRandomChatMessage();
             observeChatMessages(5);
 
             maybeRemoveMyOldChatMessages();
@@ -192,7 +193,7 @@ public class MainController {
         applicationService.getState().addObserver(state -> appendLog("Application state", Res.get("splash.applicationServiceState." + state.name())));
     }
 
-    private void printDefaultKey() {
+    private void printDefaultKeyId() {
         appendLog("Default key ID", applicationService.getSecurityService().getKeyBundleService().getDefaultKeyId());
     }
 

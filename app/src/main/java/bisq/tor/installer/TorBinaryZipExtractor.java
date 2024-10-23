@@ -67,6 +67,6 @@ public class TorBinaryZipExtractor {
     }
 
     private boolean isMacOsOrLinux() {
-        return OS.isMacOs() || OS.isLinux();
+        return OS.isMacOs() || OS.isLinux() || OS.isAndroid();
     }
 }
