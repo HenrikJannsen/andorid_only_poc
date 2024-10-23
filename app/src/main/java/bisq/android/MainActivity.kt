@@ -1,6 +1,5 @@
-package bisq.ui
+package bisq.android
 
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -13,39 +12,37 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import bisq.android.main.MainController
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import bisq.app.AndroidApp
-import bisq.ui.ui.theme.MobileTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import bisq.android.ui.theme.MobileTheme
 import lombok.extern.slf4j.Slf4j
-import java.nio.file.Path
 
 
 @Slf4j
 class MainActivity : ComponentActivity() {
+    var logViewModel = LogViewModel()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
 
         val userDataDir = getFilesDir().toPath()
-        var androidApp = AndroidApp(
-            userDataDir,
-            isRunningInAndroidEmulator()
-        )
+        var controller = MainController(userDataDir)
 
-        // map observable log message from androidApp to our UI
-        var logViewModel = LogViewModel()
-        androidApp.logMessage.addObserver { info ->
-            logViewModel.update(info)
+        // Map observable log message from java model to logViewModel
+        controller.getLogMessage().addObserver { info ->
+            logViewModel.setLogMessage(info)
         }
+        controller.initialize()
 
+        enableEdgeToEdge()
         setContent {
             MobileTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Display(
+                    LogView(
                         logViewModel = logViewModel,
                         modifier = Modifier.padding(innerPadding)
                     )
@@ -53,31 +50,21 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
-    fun isRunningInAndroidEmulator(): Boolean {
-        return (Build.FINGERPRINT.startsWith("google/sdk_gphone_") ||
-                Build.FINGERPRINT.contains("generic") ||
-                Build.MODEL.contains("Emulator") ||
-                Build.MANUFACTURER.contains("Google") ||
-                Build.PRODUCT.contains("sdk_gphone") ||
-                Build.HARDWARE == "goldfish" ||
-                Build.HARDWARE == "ranchu")
-    }
 }
 
 class LogViewModel : ViewModel() {
-    private val _value = MutableStateFlow("N/A")
-    val value: StateFlow<String> = _value
-    fun update(newValue: String) {
+    private val _logMessage = MutableStateFlow("N/A")
+    val logMessage: StateFlow<String> = _logMessage
+    fun setLogMessage(newValue: String) {
         viewModelScope.launch {
-            _value.value = newValue
+            _logMessage.value = newValue
         }
     }
 }
 
 @Composable
-fun Display(logViewModel: LogViewModel, modifier: Modifier = Modifier) {
-    val value by logViewModel.value.collectAsState()
+fun LogView(logViewModel: LogViewModel, modifier: Modifier = Modifier) {
+    val value by logViewModel.logMessage.collectAsState()
     Text(
         text = value,
         modifier = modifier

@@ -1,13 +1,9 @@
-package bisq.app;
-
+package bisq.android.main;
 
 import com.google.common.base.Joiner;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-
 import java.nio.file.Path;
 import java.security.KeyPair;
-import java.security.Security;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -16,8 +12,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
+import bisq.android.AndroidApplicationService;
+import bisq.android.main.user_profile.UserProfileController;
 import bisq.chat.ChatChannelDomain;
 import bisq.chat.ChatMessage;
 import bisq.chat.ChatService;
@@ -28,9 +27,8 @@ import bisq.chat.two_party.TwoPartyPrivateChatChannel;
 import bisq.chat.two_party.TwoPartyPrivateChatMessage;
 import bisq.common.currency.MarketRepository;
 import bisq.common.encoding.Hex;
-import bisq.common.facades.FacadeProvider;
 import bisq.common.locale.LanguageRepository;
-import bisq.common.network.AndroidEmulatorLocalhostFacade;
+import bisq.common.network.TransportType;
 import bisq.common.observable.Observable;
 import bisq.common.observable.Pin;
 import bisq.common.observable.collection.CollectionObserver;
@@ -39,7 +37,6 @@ import bisq.common.timer.Scheduler;
 import bisq.common.util.MathUtils;
 import bisq.common.util.StringUtils;
 import bisq.i18n.Res;
-import bisq.common.network.TransportType;
 import bisq.network.p2p.ServiceNode;
 import bisq.network.p2p.node.Node;
 import bisq.network.p2p.services.peer_group.PeerGroupManager;
@@ -53,20 +50,25 @@ import bisq.user.profile.UserProfile;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class AndroidApp {
+public class MainController {
+    private final MainModel model;
+    private final MainView view;
     private final AndroidApplicationService applicationService;
-    public final List<String> logMessages = new ArrayList<>();
-    public final Observable<String> logMessage = new Observable<>("");
+    private final UserProfileController userProfileController;
+    private final UserIdentityService userIdentityService;
 
-    public AndroidApp(Path userDataDir, boolean isRunningInAndroidEmulator) {
-        FacadeProvider.setLocalhostFacade(new AndroidEmulatorLocalhostFacade());
+    public MainController(Path userDataDir) {
+        applicationService = new AndroidApplicationService(userDataDir);
+        model = new MainModel();
+        view = new MainView(this, model);
 
-        // Androids default BC version does not support all algorithms we need, thus we remove
-        // it and add our BC provider
-        Security.removeProvider("BC");
-        Security.addProvider(new BouncyCastleProvider());
+        userIdentityService = applicationService.getUserService().getUserIdentityService();
 
-        applicationService = AndroidApplicationService.getInstance(userDataDir);
+        userProfileController = new UserProfileController(applicationService.getUserService(),
+                applicationService.getSecurityService());
+    }
+
+    public void initialize() {
         CompletableFuture.runAsync(() -> {
             observeAppState();
             printDefaultKey();
@@ -74,21 +76,35 @@ public class AndroidApp {
             applicationService.readAllPersisted().join();
             applicationService.initialize().join();
 
+            if (userIdentityService.getUserIdentities().isEmpty()) {
+                //createUserIfNoneExist();
+                userProfileController.initialize();
+
+                // mock profile creation and wait until done.
+                userProfileController.createUserProfile().join();
+            } else {
+                printUserProfiles();
+            }
+
             observeNetworkState();
             observeNumConnections();
             observePrivateMessages();
             printMarketPrice();
 
-            createUserIfNoneExist();
-            printUserProfiles();
-
-            // publishRandomChatMessage();
+           // publishRandomChatMessage();
             observeChatMessages(5);
 
-            removeMyOldChatMessages();
+            maybeRemoveMyOldChatMessages();
         });
+
+        view.initialize();
     }
 
+    public Observable<String> getLogMessage() {
+        return model.getLogMessage();
+    }
+
+    // Use cases
     private void observeNetworkState() {
         Optional.ofNullable(applicationService.getNetworkService().getDefaultNodeStateByTransportType().get(TransportType.CLEAR))
                 .orElseThrow()
@@ -243,10 +259,13 @@ public class AndroidApp {
         CommonPublicChatChannelService discussionChannelService = chatService.getCommonPublicChatChannelServices().get(chatChannelDomain);
         CommonPublicChatChannel channel = discussionChannelService.getChannels().stream().findFirst().orElseThrow();
         UserIdentity userIdentity = userIdentityService.getSelectedUserIdentity();
-        discussionChannelService.publishChatMessage("Message " + new Random().nextInt(100),
-                Optional.empty(),
-                channel,
-                userIdentity);
+        discussionChannelService.publishChatMessage("Dev message " + new Random().nextInt(100),
+                        Optional.empty(),
+                        channel,
+                        userIdentity)
+                .whenComplete((result, throwable) -> {
+                    log.info("publishChatMessage result {}", result);
+                });
     }
 
     private void observeChatMessages(int numLastMessages) {
@@ -265,7 +284,7 @@ public class AndroidApp {
                     String userName = userService.getUserProfileService().findUserProfile(authorUserProfileId)
                             .map(UserProfile::getUserName)
                             .orElse("N/A");
-                    maybeRemoveMyOldChatMessages(message);
+                    maybeRemoveMyOldChatMessages();
                     return "{" + userName + "} " + message.getText();
                 })
                 .skip(toSkip)
@@ -285,7 +304,7 @@ public class AndroidApp {
                 String text = message.getText();
                 String displayString = "{" + userName + "} " + text;
                 appendLog("Chat message", displayString);
-                maybeRemoveMyOldChatMessages(message);
+                maybeRemoveMyOldChatMessages();
             }
 
             @Override
@@ -300,39 +319,37 @@ public class AndroidApp {
         });
     }
 
-    private void removeMyOldChatMessages( ) {
-        maybeRemoveMyOldChatMessages(null);
-    }
-    private void maybeRemoveMyOldChatMessages(CommonPublicChatMessage newMessage) {
-            UserService userService = applicationService.getUserService();
-            UserIdentityService userIdentityService = userService.getUserIdentityService();
-            UserIdentity userIdentity = userIdentityService.getSelectedUserIdentity();
-
-            ChatService chatService = applicationService.getChatService();
-            ChatChannelDomain chatChannelDomain = ChatChannelDomain.DISCUSSION;
-            CommonPublicChatChannelService discussionChannelService = chatService.getCommonPublicChatChannelServices().get(chatChannelDomain);
-            CommonPublicChatChannel channel = discussionChannelService.getChannels().stream().findFirst().orElseThrow();
-            String myProfileId = userIdentity.getUserProfile().getId();
-            appendLog("Number of chat messages", channel.getChatMessages().size());
-            channel.getChatMessages().stream()
-                    .filter(message -> !message.equals(newMessage))
-                    .filter(message -> myProfileId.equals(message.getAuthorUserProfileId()))
-                    .forEach(message -> {
-                        appendLog("Remove my old chat message", StringUtils.truncate(message.getText(), 5));
-                        discussionChannelService.deleteChatMessage(message, userIdentity.getNetworkIdWithKeyPair())
-                                .whenComplete((r, t) -> {
-                                    appendLog("Remove message result", t == null);
-                                    log.error(r.toString());
-                                });
-                    });
+    private void maybeRemoveMyOldChatMessages() {
+        UserService userService = applicationService.getUserService();
+        UserIdentityService userIdentityService = userService.getUserIdentityService();
+        UserIdentity userIdentity = userIdentityService.getSelectedUserIdentity();
+        ChatService chatService = applicationService.getChatService();
+        ChatChannelDomain chatChannelDomain = ChatChannelDomain.DISCUSSION;
+        CommonPublicChatChannelService discussionChannelService = chatService.getCommonPublicChatChannelServices().get(chatChannelDomain);
+        CommonPublicChatChannel channel = discussionChannelService.getChannels().stream().findFirst().orElseThrow();
+        String myProfileId = userIdentity.getUserProfile().getId();
+        appendLog("Number of chat messages", channel.getChatMessages().size());
+        long expireDate = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(30);
+        channel.getChatMessages().stream()
+                .filter(message -> message.getDate() < expireDate)
+                .filter(message -> myProfileId.equals(message.getAuthorUserProfileId()))
+                .forEach(message -> {
+                    appendLog("Remove my old chat message", StringUtils.truncate(message.getText(), 5));
+                    discussionChannelService.deleteChatMessage(message, userIdentity.getNetworkIdWithKeyPair())
+                            .whenComplete((r, t) -> {
+                                appendLog("Remove message result", t == null);
+                                log.error(r.toString());
+                            });
+                });
     }
 
     private void appendLog(String key, Object value) {
         String line = key + ": " + value;
+        List<String> logMessages = model.getLogMessages();
         logMessages.add(line);
         if (logMessages.size() > 20) {
             logMessages.remove(0);
         }
-        logMessage.set(Joiner.on("\n").join(logMessages));
+        model.getLogMessage().set(Joiner.on("\n").join(logMessages));
     }
 }

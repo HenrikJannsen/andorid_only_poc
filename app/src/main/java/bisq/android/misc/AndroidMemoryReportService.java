@@ -1,14 +1,10 @@
-package bisq.app;
-
+package bisq.android.misc;
 
 import java.util.concurrent.CompletableFuture;
 
 import bisq.common.platform.MemoryReportService;
 
-public class AndroidMemoryReport implements MemoryReportService {
-    public AndroidMemoryReport() {
-    }
-
+public class AndroidMemoryReportService implements MemoryReportService {
     @Override
     public void logReport() {
     }
