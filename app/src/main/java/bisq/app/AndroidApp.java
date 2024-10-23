@@ -37,8 +37,8 @@ import bisq.common.observable.collection.CollectionObserver;
 import bisq.common.observable.collection.ObservableSet;
 import bisq.common.timer.Scheduler;
 import bisq.common.util.MathUtils;
+import bisq.common.util.StringUtils;
 import bisq.i18n.Res;
-import bisq.common.network.Address;
 import bisq.common.network.TransportType;
 import bisq.network.p2p.ServiceNode;
 import bisq.network.p2p.node.Node;
@@ -82,8 +82,10 @@ public class AndroidApp {
             createUserIfNoneExist();
             printUserProfiles();
 
-            publishRandomChatMessage();
+            // publishRandomChatMessage();
             observeChatMessages(5);
+
+            removeMyOldChatMessages();
         });
     }
 
@@ -119,7 +121,7 @@ public class AndroidApp {
                                 k -> channel.getChatMessages().addObserver(new CollectionObserver<>() {
                                     @Override
                                     public void add(TwoPartyPrivateChatMessage message) {
-                                        String text="";
+                                        String text = "";
                                         switch (message.getChatMessageType()) {
                                             case TEXT -> {
                                                 text = message.getText();
@@ -263,6 +265,7 @@ public class AndroidApp {
                     String userName = userService.getUserProfileService().findUserProfile(authorUserProfileId)
                             .map(UserProfile::getUserName)
                             .orElse("N/A");
+                    maybeRemoveMyOldChatMessages(message);
                     return "{" + userName + "} " + message.getText();
                 })
                 .skip(toSkip)
@@ -282,6 +285,7 @@ public class AndroidApp {
                 String text = message.getText();
                 String displayString = "{" + userName + "} " + text;
                 appendLog("Chat message", displayString);
+                maybeRemoveMyOldChatMessages(message);
             }
 
             @Override
@@ -294,6 +298,33 @@ public class AndroidApp {
             public void clear() {
             }
         });
+    }
+
+    private void removeMyOldChatMessages( ) {
+        maybeRemoveMyOldChatMessages(null);
+    }
+    private void maybeRemoveMyOldChatMessages(CommonPublicChatMessage newMessage) {
+            UserService userService = applicationService.getUserService();
+            UserIdentityService userIdentityService = userService.getUserIdentityService();
+            UserIdentity userIdentity = userIdentityService.getSelectedUserIdentity();
+
+            ChatService chatService = applicationService.getChatService();
+            ChatChannelDomain chatChannelDomain = ChatChannelDomain.DISCUSSION;
+            CommonPublicChatChannelService discussionChannelService = chatService.getCommonPublicChatChannelServices().get(chatChannelDomain);
+            CommonPublicChatChannel channel = discussionChannelService.getChannels().stream().findFirst().orElseThrow();
+            String myProfileId = userIdentity.getUserProfile().getId();
+            appendLog("Number of chat messages", channel.getChatMessages().size());
+            channel.getChatMessages().stream()
+                    .filter(message -> !message.equals(newMessage))
+                    .filter(message -> myProfileId.equals(message.getAuthorUserProfileId()))
+                    .forEach(message -> {
+                        appendLog("Remove my old chat message", StringUtils.truncate(message.getText(), 5));
+                        discussionChannelService.deleteChatMessage(message, userIdentity.getNetworkIdWithKeyPair())
+                                .whenComplete((r, t) -> {
+                                    appendLog("Remove message result", t == null);
+                                    log.error(r.toString());
+                                });
+                    });
     }
 
     private void appendLog(String key, Object value) {
