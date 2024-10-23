@@ -1,4 +1,4 @@
-package bisq.android.misc;
+package bisq.android.impl;
 
 import java.util.concurrent.CompletableFuture;
 

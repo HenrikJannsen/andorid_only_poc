@@ -18,7 +18,7 @@
 package bisq.android;
 
 import bisq.account.AccountService;
-import bisq.android.misc.AndroidMemoryReportService;
+import bisq.android.impl.AndroidMemoryReportService;
 import bisq.application.ApplicationService;
 import bisq.application.State;
 import bisq.bisq_easy.BisqEasyService;
