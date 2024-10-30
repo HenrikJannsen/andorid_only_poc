@@ -108,24 +108,25 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 
 
-    //implementation("bisq:common:2.1.1")
+    implementation("bisq:common:2.1.2")
     implementation(libs.typesafe.config)
     implementation(libs.annotations)
 
-   /* implementation("bisq:i18n:2.1.1")
+    implementation("bisq:i18n:2.1.2")
 
-    implementation("bisq:persistence:2.1.1")
+    implementation("bisq:persistence:2.1.2")
 
-    implementation("bisq:security:2.1.1")*/
+    implementation("bisq:security:2.1.2")
     implementation(libs.bouncycastle)
     implementation(libs.bouncycastle.pg)
-    implementation(libs.typesafe.config)
     testImplementation(libs.apache.commons.lang)
     implementation(libs.google.guava)
 
     // network
-    // implementation("bisq:network-common:2.1.1")
-    // implementation("bisq:network-identity:2.1.1")
+    implementation("bisq:network-identity:2.1.2")
+    implementation("bisq:socks5-socket-channel:2.1.2")
+    implementation("bisq:i2p:2.1.2")
+    implementation("bisq:network:2.1.2")
     implementation(libs.chimp.jsocks)
     implementation(libs.failsafe)
     implementation(libs.apache.httpcomponents.httpclient)
@@ -138,26 +139,26 @@ dependencies {
     //i2p
     implementation(libs.bundles.i2p)
 
-    // implementation("bisq:identity:2.1.1") // cannot be used until network dependencies are fixed. -> Could not find network:network-common:.
+    implementation("bisq:identity:2.1.2") // cannot be used until network dependencies are fixed. -> Could not find network:network-common:.
 
-    // implementation("bisq:account:2.1.1")
+    implementation("bisq:account:2.1.2")
 
-    // implementation("bisq:settings:2.1.1")
+    implementation("bisq:settings:2.1.2")
 
-    // implementation("bisq:bonded-roles:2.1.1")
+    implementation("bisq:bonded-roles:2.1.2")
     implementation(libs.google.gson)
     implementation(libs.typesafe.config)
     implementation(libs.bundles.jackson)
 
-    // implementation("bisq:user:2.1.1")
-    // implementation("bisq:contract:2.1.1")
-    // implementation("bisq:offer:2.1.1")
-    // implementation("bisq:trade:2.1.1")
-    // implementation("bisq:support:2.1.1")
-    // implementation("bisq:application:2.1.1")
-    //  implementation("bisq:bisq-easy:2.1.1")
-    // implementation("bisq:chat:2.1.1")
-    // implementation("bisq:presentation:2.1.1")
+    implementation("bisq:user:2.1.2")
+    implementation("bisq:contract:2.1.2")
+    implementation("bisq:offer:2.1.2")
+    implementation("bisq:trade:2.1.2")
+    implementation("bisq:support:2.1.2")
+    implementation("bisq:application:2.1.2")
+    implementation("bisq:bisq-easy:2.1.2")
+    implementation("bisq:chat:2.1.2")
+    implementation("bisq:presentation:2.1.2")
 
     compileOnly(libs.lombok)
     annotationProcessor(libs.lombok)
