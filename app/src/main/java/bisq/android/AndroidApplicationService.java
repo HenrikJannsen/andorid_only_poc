@@ -21,7 +21,6 @@ import bisq.account.AccountService;
 import bisq.android.impl.AndroidMemoryReportService;
 import bisq.application.ApplicationService;
 import bisq.application.State;
-import bisq.bisq_easy.BisqEasyService;
 import bisq.bonded_roles.BondedRolesService;
 import bisq.bonded_roles.security_manager.alert.AlertNotificationsService;
 import bisq.chat.ChatService;
@@ -89,7 +88,6 @@ public class AndroidApplicationService extends ApplicationService {
     private final SupportService supportService;
     private final SystemNotificationService systemNotificationService;
     private final TradeService tradeService;
-    private final BisqEasyService bisqEasyService;
     private final AlertNotificationsService alertNotificationsService;
     private final FavouriteMarketsService favouriteMarketsService;
     private final DontShowAgainService dontShowAgainService;
@@ -154,21 +152,6 @@ public class AndroidApplicationService extends ApplicationService {
         tradeService = new TradeService(networkService, identityService, persistenceService, offerService,
                 contractService, supportService, chatService, bondedRolesService, userService, settingsService);
 
-        bisqEasyService = new BisqEasyService(persistenceService,
-                securityService,
-                networkService,
-                identityService,
-                bondedRolesService,
-                accountService,
-                offerService,
-                contractService,
-                userService,
-                chatService,
-                settingsService,
-                supportService,
-                systemNotificationService,
-                tradeService);
-
         alertNotificationsService = new AlertNotificationsService(settingsService, bondedRolesService.getAlertService());
 
         favouriteMarketsService = new FavouriteMarketsService(settingsService);
@@ -199,7 +182,6 @@ public class AndroidApplicationService extends ApplicationService {
                 .thenCompose(result -> systemNotificationService.initialize())
                 .thenCompose(result -> supportService.initialize())
                 .thenCompose(result -> tradeService.initialize())
-                .thenCompose(result -> bisqEasyService.initialize())
                 .thenCompose(result -> alertNotificationsService.initialize())
                 .thenCompose(result -> favouriteMarketsService.initialize())
                 .thenCompose(result -> dontShowAgainService.initialize())
@@ -232,7 +214,6 @@ public class AndroidApplicationService extends ApplicationService {
         return supplyAsync(() -> dontShowAgainService.shutdown().exceptionally(this::logError)
                 .thenCompose(result -> favouriteMarketsService.shutdown().exceptionally(this::logError))
                 .thenCompose(result -> alertNotificationsService.shutdown().exceptionally(this::logError))
-                .thenCompose(result -> bisqEasyService.shutdown().exceptionally(this::logError))
                 .thenCompose(result -> tradeService.shutdown().exceptionally(this::logError))
                 .thenCompose(result -> supportService.shutdown().exceptionally(this::logError))
                 .thenCompose(result -> systemNotificationService.shutdown().exceptionally(this::logError))

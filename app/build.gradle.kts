@@ -156,7 +156,7 @@ dependencies {
     implementation("bisq:trade:2.1.2")
     implementation("bisq:support:2.1.2")
     implementation("bisq:application:2.1.2")
-    implementation("bisq:bisq-easy:2.1.2")
+   // implementation("bisq:bisq-easy:2.1.2")
     implementation("bisq:chat:2.1.2")
     implementation("bisq:presentation:2.1.2")
 
